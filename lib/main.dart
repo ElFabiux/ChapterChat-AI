@@ -1,63 +1,63 @@
+import 'package:chapter_chat_ai/blocs/loggin/loggin_bloc.dart';
+import 'package:chapter_chat_ai/blocs/loggin/repository/loggin_repository.dart';
+import 'package:chapter_chat_ai/blocs/signup/repository/signup_repository.dart';
+import 'package:chapter_chat_ai/blocs/signup/signup_bloc.dart';
+import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+
 import 'core/theme/app_colors.dart';
 import 'core/theme/theme_provider.dart';
-import 'screens/home/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  await Firebase.initializeApp();
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AuthBloc(AuthRepository())),
+        BlocProvider(create: (_) => SignupBloc(SignupRepository())),
+      ],
+      child: ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: const MyApp(),
+      ),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late ThemeProvider _themeProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeProvider = ThemeProvider();
-    _themeProvider.addListener(_onThemeChanged);
-  }
-
-  @override
-  void dispose() {
-    _themeProvider.removeListener(_onThemeChanged);
-    _themeProvider.dispose();
-    super.dispose();
-  }
-
-  void _onThemeChanged() {
-    setState(() {});
-    _updateSystemUI();
-  }
-
-  void _updateSystemUI() {
+  void updateSystemUI(ThemeProvider themeProvider) {
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness:
-            _themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
-        systemNavigationBarColor: _themeProvider.colors.background,
+            themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: themeProvider.colors.background,
         systemNavigationBarIconBrightness:
-            _themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
+            themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = _themeProvider.colors;
+    final themeProvider = context.watch<ThemeProvider>();
+
+    updateSystemUI(themeProvider); // 🔥 Actualiza barra de estado y navegación
 
     return MaterialApp(
       title: 'Mi Biblioteca',
       debugShowCheckedModeBanner: false,
+
+      themeMode: themeProvider.themeMode,
+
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
@@ -69,6 +69,7 @@ class _MyAppState extends State<MyApp> {
           error: AppColors.error,
         ),
       ),
+
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
@@ -80,8 +81,8 @@ class _MyAppState extends State<MyApp> {
           error: AppColors.error,
         ),
       ),
-      themeMode: _themeProvider.themeMode,
-      home: HomeScreen(themeProvider: _themeProvider),
+
+      home: const LogginScreen(), // 👈 Ya NO necesita ThemeProvider
     );
   }
 }
