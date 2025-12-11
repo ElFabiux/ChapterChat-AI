@@ -1,31 +1,49 @@
-import 'package:chapter_chat_ai/blocs/loggin/loggin_bloc.dart';
-import 'package:chapter_chat_ai/blocs/loggin/repository/loggin_repository.dart';
-import 'package:chapter_chat_ai/blocs/signup/repository/signup_repository.dart';
-import 'package:chapter_chat_ai/blocs/signup/signup_bloc.dart';
-import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+// ============================================================
+// IMPORTS DE AUTENTICACIÓN (COMENTADOS TEMPORALMENTE)
+// ============================================================
+// import 'package:chapter_chat_ai/blocs/loggin/loggin_bloc.dart';
+// import 'package:chapter_chat_ai/blocs/loggin/repository/loggin_repository.dart';
+// import 'package:chapter_chat_ai/blocs/signup/repository/signup_repository.dart';
+// import 'package:chapter_chat_ai/blocs/signup/signup_bloc.dart';
+// import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_colors.dart';
 import 'core/theme/theme_provider.dart';
+import 'screens/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  // ============================================================
+  // FIREBASE COMENTADO TEMPORALMENTE
+  // ============================================================
+  // await Firebase.initializeApp();
 
   runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => AuthBloc(AuthRepository())),
-        BlocProvider(create: (_) => SignupBloc(SignupRepository())),
-      ],
-      child: ChangeNotifierProvider(
-        create: (_) => ThemeProvider(),
-        child: const MyApp(),
-      ),
+    // ============================================================
+    // BLOC PROVIDERS COMENTADOS TEMPORALMENTE
+    // ============================================================
+    // MultiBlocProvider(
+    //   providers: [
+    //     BlocProvider(create: (_) => AuthBloc(AuthRepository())),
+    //     BlocProvider(create: (_) => SignupBloc(SignupRepository())),
+    //   ],
+    //   child: ChangeNotifierProvider(
+    //     create: (_) => ThemeProvider(),
+    //     child: const MyApp(),
+    //   ),
+    // ),
+
+    // 👇 VERSIÓN SIN AUTENTICACIÓN - CARGA DIRECTO AL HOME
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
     ),
   );
 }
@@ -82,7 +100,13 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: const LogginScreen(), // 👈 Ya NO necesita ThemeProvider
+      // ============================================================
+      // PANTALLA DE LOGIN COMENTADA TEMPORALMENTE
+      // ============================================================
+      // home: const LogginScreen(), // 👈 Ya NO necesita ThemeProvider
+
+      // 👇 CARGA DIRECTA AL HOME (MainShell)
+      home: MainShell(themeProvider: themeProvider),
     );
   }
 }

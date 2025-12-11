@@ -5,93 +5,93 @@ import '../../models/book.dart';
 class BookCard extends StatelessWidget {
   final Book book;
   final AppThemeColors colors;
-  final VoidCallback? onChatPressed;
-  final VoidCallback? onMarkAsReadPressed;
-  final VoidCallback? onEditPressed;
+  final VoidCallback? onTap;
+  final VoidCallback? onActionPressed;
 
   const BookCard({
     super.key,
     required this.book,
     required this.colors,
-    this.onChatPressed,
-    this.onMarkAsReadPressed,
-    this.onEditPressed,
+    this.onTap,
+    this.onActionPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen del libro (lado izquierdo)
-          _buildBookCover(),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Portada del libro
+            _buildBookCover(),
 
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-          // Información y acciones (lado derecho)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título del libro
-                Text(
-                  book.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+            // Información del libro
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  // Título
+                  Text(
+                    book.title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
 
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
 
-                // Autor
-                Text(
-                  book.author,
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  // Autor
+                  Text(
+                    book.author,
+                    style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
-                const SizedBox(height: 12),
-
-                // Botones de acción
-                _buildActionButtons(),
-              ],
+                  // Progreso de lectura (si hay)
+                  if (book.readingProgress > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      book.progressText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Botón de acción (checkmark o descarga)
+            _buildActionButton(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBookCover() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 80,
-        height: 110,
-        decoration: BoxDecoration(
-          color: colors.background,
-          border: Border.all(color: colors.border, width: 1),
-          borderRadius: BorderRadius.circular(8),
-        ),
+    return Container(
+      width: 80,
+      height: 110,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7),
         child:
             book.coverImagePath != null
                 ? Image.asset(
@@ -107,73 +107,31 @@ class BookCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholderCover() {
-    return Center(
-      child: Icon(Icons.menu_book, size: 40, color: colors.iconDefault),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        // Botón Chat
-        _buildActionButton(
-          icon: Icons.chat_bubble_outline,
-          label: 'Chat',
-          onPressed: onChatPressed,
-          color: colors.primary,
-        ),
-
-        // Botón Marcar como leído
-        _buildActionButton(
-          icon: book.isRead ? Icons.check_circle : Icons.check_circle_outline,
-          label: book.isRead ? 'Leído' : 'Marcar',
-          onPressed: onMarkAsReadPressed,
-          color: book.isRead ? colors.success : colors.primaryLight,
-        ),
-
-        // Botón Editar
-        _buildActionButton(
-          icon: Icons.edit_outlined,
-          label: 'Editar',
-          onPressed: onEditPressed,
+    return Container(
+      color: colors.surface,
+      child: Center(
+        child: Icon(
+          Icons.menu_book_outlined,
+          size: 36,
           color: colors.iconDefault,
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-    required Color color,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildActionButton() {
+    return GestureDetector(
+      onTap: onActionPressed,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 30, left: 8),
+        child:
+            book.isDownloaded
+                ? Icon(Icons.check_circle, color: colors.primary, size: 28)
+                : Icon(
+                  Icons.download_rounded,
+                  color: colors.iconDefault,
+                  size: 28,
+                ),
       ),
     );
   }

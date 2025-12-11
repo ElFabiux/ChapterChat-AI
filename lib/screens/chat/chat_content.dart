@@ -1,0 +1,156 @@
+import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
+import '../../models/chat_character.dart';
+import '../../widgets/chat/chat_card.dart';
+import 'chat_screen.dart';
+
+class ChatContent extends StatelessWidget {
+  final AppThemeColors colors;
+  final ThemeProvider themeProvider;
+  final String searchQuery;
+
+  const ChatContent({
+    super.key,
+    required this.colors,
+    required this.themeProvider,
+    this.searchQuery = '',
+  });
+
+  // Lista de personajes de ejemplo (ordenados por más reciente)
+  List<ChatCharacter> get _characters => [
+    ChatCharacter(
+      id: '1',
+      name: 'Harry Potter',
+      lastMessageTime: DateTime.now().subtract(const Duration(hours: 2)),
+      lastMessagePreview: 'Yeah: never underestimate...',
+      hasUnreadMessages: true,
+      unreadCount: 4,
+    ),
+    ChatCharacter(
+      id: '2',
+      name: 'Sherlock Holmes',
+      lastMessageTime: DateTime.now().subtract(const Duration(hours: 6)),
+      lastMessagePreview: 'Elementary, my dear friend...',
+      hasUnreadMessages: true,
+      unreadCount: 2,
+    ),
+    ChatCharacter(
+      id: '3',
+      name: 'Holden Caulfield',
+      lastMessageTime: DateTime.now().subtract(const Duration(hours: 6)),
+      lastMessagePreview: "This is epic Fabiux, I'm...",
+      hasUnreadMessages: false,
+    ),
+    ChatCharacter(
+      id: '4',
+      name: 'Jon Snow',
+      lastMessageTime: DateTime.now().subtract(const Duration(days: 14)),
+      lastMessagePreview: "This is epic Fabiux, I'm...",
+      hasUnreadMessages: false,
+    ),
+  ];
+
+  List<ChatCharacter> get filteredCharacters {
+    if (searchQuery.isEmpty) return _characters;
+    final query = searchQuery.toLowerCase();
+    return _characters.where((character) {
+      return character.name.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  void _onCharacterTap(BuildContext context, ChatCharacter character) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                ChatScreen(character: character, colors: themeProvider.colors),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Animación de slide de derecha a izquierda
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayCharacters = filteredCharacters;
+
+    if (displayCharacters.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.only(top: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            // Primer elemento es el título "AI Chats"
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                child: Text(
+                  'AI Chats',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              );
+            }
+
+            // Personajes
+            final character = displayCharacters[index - 1];
+            return ChatCard(
+              character: character,
+              colors: colors,
+              onTap: () => _onCharacterTap(context, character),
+            );
+          },
+          childCount: displayCharacters.length + 1, // +1 para el título
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SliverFillRemaining(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              searchQuery.isEmpty
+                  ? Icons.chat_bubble_outline
+                  : Icons.search_off,
+              size: 64,
+              color: colors.iconDefault,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              searchQuery.isEmpty
+                  ? 'No hay chats todavía'
+                  : 'No se encontraron resultados',
+              style: TextStyle(fontSize: 16, color: colors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
