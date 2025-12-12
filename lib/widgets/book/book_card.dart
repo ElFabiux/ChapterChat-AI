@@ -2,11 +2,21 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/book.dart';
 
+/// Enum para definir el modo de visualización del BookCard
+enum BookCardMode {
+  /// Modo Home: muestra progreso de lectura e icono de descarga
+  home,
+
+  /// Modo Store: muestra precio, sin icono de descarga
+  store,
+}
+
 class BookCard extends StatelessWidget {
   final Book book;
   final AppThemeColors colors;
   final VoidCallback? onTap;
   final VoidCallback? onActionPressed;
+  final BookCardMode mode;
 
   const BookCard({
     super.key,
@@ -14,125 +24,135 @@ class BookCard extends StatelessWidget {
     required this.colors,
     this.onTap,
     this.onActionPressed,
+    this.mode = BookCardMode.home,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Portada del libro
-            _buildBookCover(),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: colors.textPrimary.withOpacity(0.08),
+          highlightColor: colors.textPrimary.withOpacity(0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                // Portada del libro
+                _buildCover(),
 
-            const SizedBox(width: 16),
+                const SizedBox(width: 16),
 
-            // Información del libro
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  // Título
-                  Text(
-                    book.title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // Autor
-                  Text(
-                    book.author,
-                    style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // Progreso de lectura (si hay)
-                  if (book.readingProgress > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      book.progressText,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textSecondary,
+                // Información del libro
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Título
+                      Text(
+                        book.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
 
-            // Botón de acción (checkmark o descarga)
-            _buildActionButton(),
-          ],
+                      const SizedBox(height: 4),
+
+                      // Autor
+                      Text(
+                        book.author,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Progreso o Precio según el modo
+                      _buildBottomInfo(),
+                    ],
+                  ),
+                ),
+
+                // Icono de descarga (solo en modo Home)
+                if (mode == BookCardMode.home) ...[
+                  const SizedBox(width: 12),
+                  _buildDownloadIcon(),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBookCover() {
+  Widget _buildCover() {
     return Container(
-      width: 80,
-      height: 110,
+      width: 70,
+      height: 100,
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: colors.background,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: colors.border, width: 1),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(7),
-        child:
-            book.coverImagePath != null
-                ? Image.asset(
+      child:
+          book.coverImagePath != null
+              ? ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.asset(
                   book.coverImagePath!,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return _buildPlaceholderCover();
                   },
-                )
-                : _buildPlaceholderCover(),
-      ),
+                ),
+              )
+              : _buildPlaceholderCover(),
     );
   }
 
   Widget _buildPlaceholderCover() {
-    return Container(
-      color: colors.surface,
-      child: Center(
-        child: Icon(
-          Icons.menu_book_outlined,
-          size: 36,
-          color: colors.iconDefault,
-        ),
+    return Center(
+      child: Icon(
+        Icons.menu_book_outlined,
+        size: 32,
+        color: colors.iconDefault,
       ),
     );
   }
 
-  Widget _buildActionButton() {
-    return GestureDetector(
-      onTap: onActionPressed,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 30, left: 8),
-        child:
-            book.isDownloaded
-                ? Icon(Icons.check_circle, color: colors.primary, size: 28)
-                : Icon(
-                  Icons.download_rounded,
-                  color: colors.iconDefault,
-                  size: 28,
-                ),
-      ),
+  Widget _buildBottomInfo() {
+    switch (mode) {
+      case BookCardMode.home:
+        return Text(
+          book.progressText,
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+        );
+      case BookCardMode.store:
+        return Text(
+          book.priceText,
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+        );
+    }
+  }
+
+  Widget _buildDownloadIcon() {
+    return Icon(
+      book.isDownloaded ? Icons.download_done_rounded : Icons.download_outlined,
+      size: 24,
+      color: book.isDownloaded ? colors.primary : colors.iconDefault,
     );
   }
 }

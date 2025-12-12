@@ -6,6 +6,7 @@ class Book {
   final bool isRead;
   final bool isDownloaded;
   final double readingProgress; // 0.0 a 1.0
+  final double? price; // Precio del libro para la tienda
 
   Book({
     required this.id,
@@ -15,11 +16,17 @@ class Book {
     this.isRead = false,
     this.isDownloaded = true,
     this.readingProgress = 0.0,
+    this.price,
   });
 
   String get progressText {
     final percentage = (readingProgress * 100).toInt();
     return '$percentage% complete';
+  }
+
+  String get priceText {
+    if (price == null) return 'Free';
+    return 'CRC ${price!.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
   }
 
   Book copyWith({
@@ -30,6 +37,7 @@ class Book {
     bool? isRead,
     bool? isDownloaded,
     double? readingProgress,
+    double? price,
   }) {
     return Book(
       id: id ?? this.id,
@@ -39,6 +47,7 @@ class Book {
       isRead: isRead ?? this.isRead,
       isDownloaded: isDownloaded ?? this.isDownloaded,
       readingProgress: readingProgress ?? this.readingProgress,
+      price: price ?? this.price,
     );
   }
 }

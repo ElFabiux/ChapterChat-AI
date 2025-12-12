@@ -4,15 +4,19 @@ import '../../core/theme/app_colors.dart';
 class SearchHeader extends StatefulWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<bool>? onFocusChanged;
   final AppThemeColors colors;
   final TextEditingController? controller;
+  final bool transparentBackground;
 
   const SearchHeader({
     super.key,
     this.hintText = 'Search Books',
     this.onChanged,
+    this.onFocusChanged,
     required this.colors,
     this.controller,
+    this.transparentBackground = false,
   });
 
   @override
@@ -46,6 +50,8 @@ class _SearchHeaderState extends State<SearchHeader> {
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
+    // Notify parent about focus change
+    widget.onFocusChanged?.call(_isFocused);
   }
 
   void _onBackPressed() {
@@ -69,15 +75,17 @@ class _SearchHeaderState extends State<SearchHeader> {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: widget.colors.background,
+        color:
+            widget.transparentBackground
+                ? Colors.transparent
+                : widget.colors.background,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             color: widget.colors.surface,
             borderRadius: BorderRadius.circular(28),
           ),
-          clipBehavior:
-              Clip.hardEdge, // 👈 Evita que el texto salga del contenedor
+          clipBehavior: Clip.hardEdge,
           child: Row(
             children: [
               // Icono (lupa o back arrow)
@@ -97,7 +105,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                 ),
               ),
 
-              // Campo de texto
+              // Campo de texto - siempre alineado a la izquierda
               Expanded(
                 child: TextField(
                   controller: _controller,
@@ -108,11 +116,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                     fontSize: 16,
                   ),
                   cursorColor: widget.colors.primary,
-                  textAlign:
-                      _isFocused || _controller.text.isNotEmpty
-                          ? TextAlign.start
-                          : TextAlign
-                              .center, // 👈 Centrado cuando no hay foco ni texto
+                  textAlign: TextAlign.start, // Siempre alineado a la izquierda
                   decoration: InputDecoration(
                     hintText: widget.hintText,
                     hintStyle: TextStyle(
@@ -124,15 +128,10 @@ class _SearchHeaderState extends State<SearchHeader> {
                       vertical: 14,
                       horizontal: 8,
                     ),
-                    // Quitar el padding del icono prefix para centrar mejor
                     isDense: true,
                   ),
                 ),
               ),
-
-              // Espacio para balancear el icono de la izquierda (cuando no hay foco)
-              if (!_isFocused && _controller.text.isEmpty)
-                const SizedBox(width: 48), // Mismo ancho que el icono + padding
             ],
           ),
         ),

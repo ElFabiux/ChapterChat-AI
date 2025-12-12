@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
-import '../../widgets/common/theme_toggle_button.dart';
+import '../../widgets/profile/plan_card.dart';
 
-class ProfileContent extends StatelessWidget {
+class ProfileContent extends StatefulWidget {
   final AppThemeColors colors;
   final ThemeProvider themeProvider;
 
@@ -14,20 +14,38 @@ class ProfileContent extends StatelessWidget {
   });
 
   @override
+  State<ProfileContent> createState() => _ProfileContentState();
+}
+
+class _ProfileContentState extends State<ProfileContent> {
+  bool _isPremium = false; // Estado del plan (Free o Premium)
+
+  void _onPlanSelected(bool premium) {
+    setState(() {
+      _isPremium = premium;
+    });
+  }
+
+  void _onLogout() {
+    // TODO: Implementar logout
+    debugPrint('Logout pressed');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Usar SliverToBoxAdapter en lugar de SliverFillRemaining
-    // para evitar overflow cuando aparece el teclado
+    final colors = widget.colors;
+
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
             // Avatar del usuario
             Container(
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.deepPurple,
@@ -37,110 +55,254 @@ class ProfileContent extends StatelessWidget {
                   'F',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 52,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
+            // Saludo con nombre
             Text(
-              'Mi Perfil',
+              'Hi, Fabián Arguedas!',
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: colors.textPrimary,
               ),
             ),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 28),
 
-            // Sección de configuración
-            _buildSettingsSection(),
+            // Opciones: Theme toggle y Settings
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Theme toggle button
+                _buildThemeToggle(),
 
-            const SizedBox(height: 24),
+                const SizedBox(width: 12),
+
+                // Settings button
+                _buildIconButton(
+                  icon: Icons.settings_outlined,
+                  onTap: () {
+                    debugPrint('Settings pressed');
+                  },
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Logout button
+            _buildLogoutButton(),
+
+            const SizedBox(height: 32),
+
+            // Plan cards
+            SizedBox(
+              height: 280,
+              child: Row(
+                children: [
+                  // Free Plan
+                  Expanded(
+                    child: PlanCard(
+                      title: 'Free',
+                      isSelected: !_isPremium,
+                      isPremium: false,
+                      colors: colors,
+                      onTap: () => _onPlanSelected(false),
+                      features: [
+                        PlanFeature(
+                          icon: Icons.library_books_outlined,
+                          text: 'Personal library management',
+                          iconColor: colors.primary,
+                        ),
+                        PlanFeature(
+                          icon: Icons.search,
+                          text: 'Book search',
+                          iconColor: Colors.amber,
+                        ),
+                        PlanFeature(
+                          icon: Icons.check_circle_outline,
+                          text: 'Mark books as read',
+                          iconColor: Colors.green,
+                        ),
+                        PlanFeature(
+                          icon: Icons.storefront_outlined,
+                          text: 'Book shop',
+                          iconColor: Colors.purple,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // Premium Plan
+                  Expanded(
+                    child: PlanCard(
+                      title: 'Premium',
+                      isSelected: _isPremium,
+                      isPremium: true,
+                      colors: colors,
+                      onTap: () => _onPlanSelected(true),
+                      features: [
+                        PlanFeature(
+                          icon: Icons.verified_outlined,
+                          text: 'Everything in Free Plan',
+                          iconColor: colors.primary,
+                        ),
+                        PlanFeature(
+                          icon: Icons.auto_awesome,
+                          text: 'AI chats with characters',
+                          iconColor: Colors.amber,
+                        ),
+                        PlanFeature(
+                          icon: Icons.summarize_outlined,
+                          text: 'AI automatic summaries',
+                          iconColor: Colors.orange,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Footer
+            _buildFooter(),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSettingsSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          // Toggle de tema
-          _buildSettingsItem(
-            icon: themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-            title: 'Tema de la aplicación',
-            subtitle: themeProvider.isDarkMode ? 'Modo oscuro' : 'Modo claro',
-            trailing: ThemeToggleButton(themeProvider: themeProvider),
+  Widget _buildThemeToggle() {
+    final isDark = widget.themeProvider.isDarkMode;
+    final colors = widget.colors;
+
+    return Material(
+      color: colors.primary,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: () => widget.themeProvider.toggleTheme(),
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isDark ? Icons.dark_mode : Icons.light_mode,
+                color: Colors.white,
+                size: 22,
+              ),
+            ],
           ),
-
-          Divider(color: colors.border, height: 1),
-
-          // Otros ajustes (placeholders)
-          _buildSettingsItem(
-            icon: Icons.notifications_outlined,
-            title: 'Notificaciones',
-            subtitle: 'Activadas',
-            trailing: Icon(Icons.chevron_right, color: colors.iconDefault),
-          ),
-
-          Divider(color: colors.border, height: 1),
-
-          _buildSettingsItem(
-            icon: Icons.info_outline,
-            title: 'Acerca de',
-            subtitle: 'Versión 1.0.0',
-            trailing: Icon(Icons.chevron_right, color: colors.iconDefault),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSettingsItem({
+  Widget _buildIconButton({
     required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget trailing,
+    required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: colors.iconDefault, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          trailing,
-        ],
+    final colors = widget.colors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          child: Icon(icon, color: colors.iconDefault, size: 26),
+        ),
       ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    final colors = widget.colors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _onLogout,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Logout',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.logout, color: colors.primary, size: 22),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    final colors = widget.colors;
+
+    return Column(
+      children: [
+        // Privacy Policy · Terms of Service
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () {
+                debugPrint('Privacy Policy pressed');
+              },
+              child: Text(
+                'Privacy Policy',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+            ),
+            Text(
+              '  ·  ',
+              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            ),
+            GestureDetector(
+              onTap: () {
+                debugPrint('Terms of Service pressed');
+              },
+              child: Text(
+                'Terms of Service',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 6),
+
+        // ChapterChat AI
+        Text(
+          'ChapterChat AI',
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+        ),
+      ],
     );
   }
 }

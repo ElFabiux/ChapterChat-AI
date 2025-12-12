@@ -36,37 +36,20 @@ class HomeContent extends StatelessWidget {
       return _buildEmptyState();
     }
 
+    // El título ahora es manejado por el sticky header en MainShell
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            // Primer elemento es el título "Your Books"
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Your Books',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              );
-            }
-
-            // Libros
-            final book = displayBooks[index - 1];
-            return BookCard(
-              book: book,
-              colors: colors,
-              onTap: () => onBookTap?.call(book),
-              onActionPressed: () => onBookActionPressed?.call(book),
-            );
-          },
-          childCount: displayBooks.length + 1, // +1 para el título
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final book = displayBooks[index];
+          return BookCard(
+            book: book,
+            colors: colors,
+            mode: BookCardMode.home,
+            onTap: () => onBookTap?.call(book),
+            onActionPressed: () => onBookActionPressed?.call(book),
+          );
+        }, childCount: displayBooks.length),
       ),
     );
   }

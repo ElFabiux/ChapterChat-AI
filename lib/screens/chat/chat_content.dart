@@ -94,36 +94,18 @@ class ChatContent extends StatelessWidget {
       return _buildEmptyState();
     }
 
+    // El título ahora es manejado por el sticky header en MainShell
     return SliverPadding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.only(top: 8),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            // Primer elemento es el título "AI Chats"
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                child: Text(
-                  'AI Chats',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              );
-            }
-
-            // Personajes
-            final character = displayCharacters[index - 1];
-            return ChatCard(
-              character: character,
-              colors: colors,
-              onTap: () => _onCharacterTap(context, character),
-            );
-          },
-          childCount: displayCharacters.length + 1, // +1 para el título
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final character = displayCharacters[index];
+          return ChatCard(
+            character: character,
+            colors: colors,
+            onTap: () => _onCharacterTap(context, character),
+          );
+        }, childCount: displayCharacters.length),
       ),
     );
   }
