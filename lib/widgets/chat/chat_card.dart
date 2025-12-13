@@ -2,69 +2,96 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/chat_character.dart';
 
+/// Enum para definir el modo de visualización del ChatCard
+enum ChatCardMode {
+  /// Modo Chat: muestra tiempo desde última conversación
+  chat,
+
+  /// Modo Book Preview: muestra descripción del personaje
+  bookPreview,
+}
+
 class ChatCard extends StatelessWidget {
   final ChatCharacter character;
   final AppThemeColors colors;
   final VoidCallback? onTap;
+  final ChatCardMode mode;
 
   const ChatCard({
     super.key,
     required this.character,
     required this.colors,
     this.onTap,
+    this.mode = ChatCardMode.chat,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            // Avatar del personaje
-            _buildAvatar(),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: colors.textPrimary.withOpacity(0.08),
+        highlightColor: colors.textPrimary.withOpacity(0.04),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            crossAxisAlignment:
+                mode == ChatCardMode.bookPreview
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.center,
+            children: [
+              // Avatar del personaje
+              _buildAvatar(),
 
-            const SizedBox(width: 16),
+              const SizedBox(width: 16),
 
-            // Nombre y último mensaje
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    character.name,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+              // Nombre y subtítulo
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      character.name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _buildSubtitle(),
-                    style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-
-            // Indicador de mensajes no leídos
-            if (character.hasUnreadMessages)
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.primary,
+                    const SizedBox(height: 4),
+                    Text(
+                      _buildSubtitle(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
+                      // No maxLines limit for bookPreview mode - show full description
+                      maxLines: mode == ChatCardMode.bookPreview ? null : 1,
+                      overflow:
+                          mode == ChatCardMode.bookPreview
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-          ],
+
+              // Indicador de no leído (solo en modo chat)
+              if (mode == ChatCardMode.chat && character.hasUnread)
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colors.primary,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -99,9 +126,14 @@ class ChatCard extends StatelessWidget {
   }
 
   String _buildSubtitle() {
-    if (character.hasUnreadMessages && character.unreadCount > 0) {
-      return '${character.unreadCount}+ new messages · ${character.timeAgo}';
+    switch (mode) {
+      case ChatCardMode.chat:
+        // Only show time since last conversation
+        return character.timeAgo;
+
+      case ChatCardMode.bookPreview:
+        // Show full description
+        return character.description ?? '';
     }
-    return '${character.lastMessagePreview} · ${character.timeAgo}';
   }
 }

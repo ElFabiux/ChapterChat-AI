@@ -3,18 +3,16 @@ class ChatCharacter {
   final String name;
   final String? avatarPath;
   final DateTime lastMessageTime;
-  final String lastMessagePreview;
-  final bool hasUnreadMessages;
-  final int unreadCount;
+  final bool hasUnread; // True if character responded but user hasn't read it
+  final String? description; // Brief description for book preview mode
 
   ChatCharacter({
     required this.id,
     required this.name,
     this.avatarPath,
     required this.lastMessageTime,
-    required this.lastMessagePreview,
-    this.hasUnreadMessages = false,
-    this.unreadCount = 0,
+    this.hasUnread = false,
+    this.description,
   });
 
   String get timeAgo {
@@ -40,18 +38,16 @@ class ChatCharacter {
     String? name,
     String? avatarPath,
     DateTime? lastMessageTime,
-    String? lastMessagePreview,
-    bool? hasUnreadMessages,
-    int? unreadCount,
+    bool? hasUnread,
+    String? description,
   }) {
     return ChatCharacter(
       id: id ?? this.id,
       name: name ?? this.name,
       avatarPath: avatarPath ?? this.avatarPath,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
-      lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
-      hasUnreadMessages: hasUnreadMessages ?? this.hasUnreadMessages,
-      unreadCount: unreadCount ?? this.unreadCount,
+      hasUnread: hasUnread ?? this.hasUnread,
+      description: description ?? this.description,
     );
   }
 }
