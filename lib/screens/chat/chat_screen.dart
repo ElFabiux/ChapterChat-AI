@@ -18,7 +18,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   bool _isTyping = false;
-  bool _shouldCloseSearch = false;
 
   // Mensajes de ejemplo (estáticos por ahora)
   // Con reverse: true, el orden visual es de abajo hacia arriba,
@@ -105,26 +104,6 @@ class _ChatScreenState extends State<ChatScreen> {
     // (En el futuro aquí iría la llamada a la IA)
   }
 
-  void _onSearchChanged(String query) {
-    debugPrint('Buscando: $query');
-    // TODO: Implementar búsqueda
-  }
-
-  void _onChatInputFocused() {
-    // Cerrar la búsqueda del header cuando el input del chat recibe foco
-    setState(() {
-      _shouldCloseSearch = true;
-    });
-    // Reset después de un frame para permitir reactivación futura
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _shouldCloseSearch = false;
-        });
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Construir lista de items para el ListView reverso
@@ -153,9 +132,6 @@ class _ChatScreenState extends State<ChatScreen> {
             colors: widget.colors,
             character: widget.character,
             onBackPressed: () => Navigator.of(context).pop(),
-            onSearchChanged: _onSearchChanged,
-            searchHint: 'Search Books',
-            closeSearch: _shouldCloseSearch,
           ),
 
           // Lista de mensajes (reverse: true para que empiece desde abajo)
@@ -171,11 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
 
           // Barra de input
-          ChatInputBar(
-            colors: widget.colors,
-            onSend: _onSendMessage,
-            onFocusGained: _onChatInputFocused,
-          ),
+          ChatInputBar(colors: widget.colors, onSend: _onSendMessage),
         ],
       ),
     );

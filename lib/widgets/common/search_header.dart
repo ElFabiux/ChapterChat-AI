@@ -119,10 +119,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                           fontSize: 16,
                         ),
                         cursorColor: widget.colors.primary,
-                        textAlign:
-                            _isFocused || _controller.text.isNotEmpty
-                                ? TextAlign.start
-                                : TextAlign.center,
+                        textAlign: TextAlign.start,
                         decoration: InputDecoration(
                           hintText: widget.hintText,
                           hintStyle: TextStyle(
@@ -139,9 +136,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                       ),
                     ),
 
-                    // Balance space when not focused
-                    if (!_isFocused && _controller.text.isEmpty)
-                      const SizedBox(width: 48),
+                    // Balance space when not focused - removed since text is always left-aligned
                   ],
                 ),
               ),

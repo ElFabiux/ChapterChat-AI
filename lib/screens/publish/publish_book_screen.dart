@@ -168,7 +168,7 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
           DetailHeader(
             colors: colors,
             onBackPressed: () => Navigator.pop(context),
-            searchHint: 'Search',
+            title: 'Publish a book',
           ),
 
           // Form content
@@ -182,18 +182,7 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
                   children: [
                     const SizedBox(height: 8),
 
-                    // Title
-                    Text(
-                      'Publish a book',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w400,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
+                    // Subtitle
                     Text(
                       'Share your story with the world',
                       style: TextStyle(

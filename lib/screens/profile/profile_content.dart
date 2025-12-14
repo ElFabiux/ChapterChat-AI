@@ -72,17 +72,18 @@ class _ProfileContentState extends State<ProfileContent> {
             );
           }
           if (state is ProfileLoaded) {
-            return SliverToBoxAdapter(
+            return SliverFillRemaining(
+              hasScrollBody: false,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Avatar del usuario
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 100,
+                      height: 100,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.deepPurple,
@@ -92,26 +93,26 @@ class _ProfileContentState extends State<ProfileContent> {
                           state.name.substring(0, 1).toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 52,
+                            fontSize: 44,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
 
                     // Saludo con nombre
                     Text(
                       'Hi, ${state.name} ${state.lastname}',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                       ),
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
 
                     // Opciones: Theme toggle y Settings
                     Row(
@@ -132,17 +133,17 @@ class _ProfileContentState extends State<ProfileContent> {
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
 
                     // Logout button
                     _buildLogoutButton(),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
 
-                    // Plan cards
-                    SizedBox(
-                      height: 280,
+                    // Plan cards - Expanded para ocupar el espacio disponible
+                    Expanded(
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Free Plan
                           Expanded(
@@ -210,12 +211,12 @@ class _ProfileContentState extends State<ProfileContent> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
                     // Footer
                     _buildFooter(),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -321,12 +322,12 @@ class _ProfileContentState extends State<ProfileContent> {
               },
               child: Text(
                 'Privacy Policy',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
             ),
             Text(
               '  ·  ',
-              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
             GestureDetector(
               onTap: () {
@@ -334,18 +335,18 @@ class _ProfileContentState extends State<ProfileContent> {
               },
               child: Text(
                 'Terms of Service',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
 
         // ChapterChat AI
         Text(
           'ChapterChat AI',
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          style: TextStyle(fontSize: 12, color: colors.textSecondary),
         ),
       ],
     );

@@ -19,17 +19,11 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   late Book _book;
-  bool _shouldCloseSearch = false;
 
   @override
   void initState() {
     super.initState();
     _book = widget.book;
-  }
-
-  void _onSearchChanged(String query) {
-    debugPrint('Searching: $query');
-    // TODO: Implement search within book details
   }
 
   void _onBuyPressed() {
@@ -50,9 +44,6 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           DetailHeader(
             colors: colors,
             onBackPressed: () => Navigator.of(context).pop(),
-            onSearchChanged: _onSearchChanged,
-            searchHint: 'Search in book',
-            closeSearch: _shouldCloseSearch,
             // No character = no avatar/name shown
           ),
 
