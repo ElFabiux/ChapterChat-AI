@@ -6,8 +6,18 @@ class UserRepository {
   final _auth = FirebaseAuth.instance;
 
   Future<Map<String, dynamic>> getProfile() async {
-    final uid = _auth.currentUser!.uid;
-    final doc = await _firestore.collection('users').doc(uid).get();
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      throw Exception('No authenticated user');
+    }
+
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+
+    if (!doc.exists || doc.data() == null) {
+      throw Exception('User profile does not exist');
+    }
+
     return doc.data()!;
   }
 }

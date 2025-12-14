@@ -10,7 +10,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<LoadProfile>((event, emit) async {
       try {
         final data = await repo.getProfile();
-        emit(ProfileLoaded(data['name'], data['lastname']));
+        emit(ProfileLoaded(data['name'] ?? "", data['lastname'] ?? ""));
       } catch (e) {
         emit(ProfileError(e.toString()));
       }
