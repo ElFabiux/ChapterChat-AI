@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:chapter_chat_ai/blocs/book/bloc/book_bloc.dart';
 import 'package:chapter_chat_ai/blocs/book/repository/book_repository.dart';
 import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_bloc.dart';
@@ -16,15 +17,34 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+=======
+>>>>>>> fabiux
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
-import 'core/theme/app_colors.dart';
-import 'core/theme/theme_provider.dart';
+import 'blocs/book/bloc/book_bloc.dart';
+import 'blocs/book/repository/book_repository.dart';
 import 'blocs/chat/repository/chat_local_storage.dart';
 import 'blocs/chat/repository/active_chats_storage.dart';
+import 'blocs/library/bloc/library_bloc.dart';
+import 'blocs/library/repository/library_local_storage.dart';
+import 'blocs/loggin/bloc/loggin_bloc.dart';
+import 'blocs/loggin/repository/loggin_repository.dart';
+import 'blocs/signup/bloc/signup_bloc.dart';
+import 'blocs/signup/repository/signup_repository.dart';
+import 'blocs/user/bloc/user_bloc.dart';
+import 'blocs/user/bloc/user_event.dart';
+import 'blocs/user/repository/user_repository.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/theme_provider.dart';
+import 'screens/auth/loggin_screen.dart';
 import 'screens/main_shell.dart';
 
 void main() async {
@@ -41,6 +61,7 @@ void main() async {
   await Hive.initFlutter();
   await ChatLocalStorage.initialize();
   await ActiveChatsStorage.initialize();
+  await LibraryLocalStorage.initialize();
 
   // ============================================================
   // GEMINI INITIALIZATION
@@ -48,8 +69,12 @@ void main() async {
   try {
     await dotenv.load(fileName: ".env");
     final apiKey = dotenv.env['GEMINI_API_KEY'];
-    Gemini.init(apiKey: apiKey!, enableDebugging: true);
-    print('✅ Gemini inicializado correctamente');
+    if (apiKey != null && apiKey.isNotEmpty) {
+      Gemini.init(apiKey: apiKey, enableDebugging: true);
+      print('✅ Gemini inicializado correctamente');
+    } else {
+      print('⚠️ GEMINI_API_KEY not found in .env');
+    }
   } catch (e) {
     print('❌ Error al inicializar Gemini: $e');
   }
@@ -60,7 +85,11 @@ void main() async {
         BlocProvider(create: (_) => AuthBloc(AuthRepository())),
         BlocProvider(create: (_) => SignupBloc(SignupRepository())),
         BlocProvider(create: (_) => BookBloc(BookRepository())),
+<<<<<<< HEAD
         BlocProvider(create: (_) => PaymentBloc(PaymentRepository())),
+=======
+        BlocProvider(create: (_) => LibraryBloc()),
+>>>>>>> fabiux
         BlocProvider(
           create: (_) => ProfileBloc(UserRepository())..add(LoadProfile()),
         ),
@@ -125,7 +154,14 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Scaffold(
+              backgroundColor: themeProvider.colors.background,
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: themeProvider.colors.primary,
+                ),
+              ),
+            );
           } else if (snapshot.hasError) {
             return const LogginScreen();
           } else if (snapshot.hasData) {
