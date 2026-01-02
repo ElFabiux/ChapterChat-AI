@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../models/book.dart';
 import '../../widgets/book/book_card.dart';
+import '../book/book_detail_screen.dart';
 
 class HomeContent extends StatelessWidget {
   final AppThemeColors colors;
@@ -28,6 +31,34 @@ class HomeContent extends StatelessWidget {
     }).toList();
   }
 
+  void _navigateToBookDetail(BuildContext context, Book book) {
+    final themeProvider = context.read<ThemeProvider>();
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                BookDetailScreen(book: book, colors: themeProvider.colors),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayBooks = filteredBooks;
@@ -36,7 +67,6 @@ class HomeContent extends StatelessWidget {
       return _buildEmptyState();
     }
 
-    // El título ahora es manejado por el sticky header en MainShell
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
@@ -46,7 +76,7 @@ class HomeContent extends StatelessWidget {
             book: book,
             colors: colors,
             mode: BookCardMode.home,
-            onTap: () => onBookTap?.call(book),
+            onTap: () => _navigateToBookDetail(context, book),
             onActionPressed: () => onBookActionPressed?.call(book),
           );
         }, childCount: displayBooks.length),

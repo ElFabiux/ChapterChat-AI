@@ -4,7 +4,7 @@ import '../../models/chat_character.dart';
 
 /// Enum para definir el modo de visualización del ChatCard
 enum ChatCardMode {
-  /// Modo Chat: muestra tiempo desde última conversación y preview
+  /// Modo Chat: muestra tiempo desde última conversación
   chat,
 
   /// Modo Book Preview: muestra descripción del personaje
@@ -16,7 +16,8 @@ class ChatCard extends StatelessWidget {
   final AppThemeColors colors;
   final VoidCallback? onTap;
   final ChatCardMode mode;
-  final String? lastMessagePreview; // Optional preview from storage
+  final String? lastMessagePreview;
+  final String? bookTitle; // Show which book the character is from
 
   const ChatCard({
     super.key,
@@ -25,6 +26,7 @@ class ChatCard extends StatelessWidget {
     this.onTap,
     this.mode = ChatCardMode.chat,
     this.lastMessagePreview,
+    this.bookTitle,
   });
 
   @override
@@ -80,7 +82,24 @@ class ChatCard extends StatelessWidget {
                         ],
                       ],
                     ),
+
                     const SizedBox(height: 4),
+
+                    // Book title (if provided)
+                    if (bookTitle != null && mode == ChatCardMode.chat) ...[
+                      Text(
+                        'from $bookTitle',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+
                     // Subtítulo
                     Text(
                       _buildSubtitle(),
@@ -151,14 +170,13 @@ class ChatCard extends StatelessWidget {
       case ChatCardMode.chat:
         // Show last message preview if available
         if (lastMessagePreview != null && lastMessagePreview!.isNotEmpty) {
-          // Truncate long messages
           final preview = lastMessagePreview!;
           if (preview.length > 50) {
             return '${preview.substring(0, 50)}...';
           }
           return preview;
         }
-        return 'Tap to start chatting';
+        return 'Tap to continue chatting';
 
       case ChatCardMode.bookPreview:
         // Show full description

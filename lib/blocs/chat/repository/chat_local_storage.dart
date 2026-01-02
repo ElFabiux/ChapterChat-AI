@@ -19,8 +19,6 @@ class ChatLocalStorage {
   /// Initialize Hive and register adapters
   /// Call this in main() before runApp()
   static Future<void> initialize() async {
-    await Hive.initFlutter();
-
     // Register adapters
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(MessageSenderEntityAdapter());

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../models/chat_character.dart';
-import '../../blocs/chat/repository/chat_repository.dart';
+import '../../blocs/chat/repository/active_chats_storage.dart';
 import '../../widgets/chat/chat_card.dart';
 import 'chat_screen.dart';
 
@@ -18,89 +18,65 @@ class ChatContent extends StatefulWidget {
 }
 
 class _ChatContentState extends State<ChatContent> {
-  final ChatRepository _repository = ChatRepository();
-  Map<String, String> _lastMessagePreviews = {};
-  Map<String, DateTime> _lastMessageTimes = {};
+  List<ActiveChatData> _activeChats = [];
   bool _isLoading = true;
-
-  // Lista de personajes de ejemplo
-  List<ChatCharacter> get _characters => [
-    ChatCharacter(
-      id: '1',
-      name: 'Harry Potter',
-      lastMessageTime:
-          _lastMessageTimes['1'] ??
-          DateTime.now().subtract(const Duration(hours: 2)),
-      hasUnread: false,
-      description:
-          'The Boy Who Lived, a young wizard who survived the killing curse.',
-    ),
-    ChatCharacter(
-      id: '2',
-      name: 'Sherlock Holmes',
-      lastMessageTime:
-          _lastMessageTimes['2'] ??
-          DateTime.now().subtract(const Duration(hours: 6)),
-      hasUnread: false,
-      description: 'The world\'s only consulting detective.',
-    ),
-    ChatCharacter(
-      id: '3',
-      name: 'Holden Caulfield',
-      lastMessageTime:
-          _lastMessageTimes['3'] ??
-          DateTime.now().subtract(const Duration(hours: 6)),
-      hasUnread: false,
-      description: 'A cynical teenager from New York.',
-    ),
-    ChatCharacter(
-      id: '4',
-      name: 'Jon Snow',
-      lastMessageTime:
-          _lastMessageTimes['4'] ??
-          DateTime.now().subtract(const Duration(days: 14)),
-      hasUnread: false,
-      description: 'A member of the Night\'s Watch.',
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _loadLastMessages();
+    _loadActiveChats();
   }
 
-  Future<void> _loadLastMessages() async {
-    final Map<String, String> previews = {};
-    final Map<String, DateTime> times = {};
-
-    for (final character in _characters) {
-      final lastMessage = await _repository.getLastMessage(character.id);
-      if (lastMessage != null) {
-        previews[character.id] = lastMessage.text ?? '[Image]';
-        times[character.id] = lastMessage.timestamp;
+  Future<void> _loadActiveChats() async {
+    try {
+      final chats = await ActiveChatsStorage.instance.getAllActiveChats();
+      if (mounted) {
+        setState(() {
+          _activeChats = chats;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading active chats: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
-
-    if (mounted) {
-      setState(() {
-        _lastMessagePreviews = previews;
-        _lastMessageTimes = times;
-        _isLoading = false;
-      });
-    }
   }
 
-  List<ChatCharacter> get filteredCharacters {
-    if (widget.searchQuery.isEmpty) return _characters;
+  List<ActiveChatData> get filteredChats {
+    if (widget.searchQuery.isEmpty) return _activeChats;
     final query = widget.searchQuery.toLowerCase();
-    return _characters.where((character) {
-      return character.name.toLowerCase().contains(query);
+    return _activeChats.where((chat) {
+      return chat.characterName.toLowerCase().contains(query) ||
+          chat.bookTitle.toLowerCase().contains(query);
     }).toList();
   }
 
-  void _onCharacterTap(BuildContext context, ChatCharacter character) {
+  ChatCharacter _activeChatToCharacter(ActiveChatData data) {
+    return ChatCharacter(
+      id: data.characterId,
+      name: data.characterName,
+      avatarPath: data.avatarPath,
+      lastMessageTime: data.lastInteractionTime,
+      hasUnread: data.hasUnread,
+      description: data.characterDescription,
+    );
+  }
+
+  void _onCharacterTap(BuildContext context, ActiveChatData chatData) async {
+    // Update last interaction time
+    await ActiveChatsStorage.instance.updateLastInteraction(
+      chatData.characterId,
+    );
+
+    if (!context.mounted) return;
+
     final themeProvider = context.read<ThemeProvider>();
+    final character = _activeChatToCharacter(chatData);
+
     Navigator.of(context)
         .push(
           PageRouteBuilder(
@@ -133,16 +109,24 @@ class _ChatContentState extends State<ChatContent> {
           ),
         )
         .then((_) {
-          // Reload last messages when returning from chat
-          _loadLastMessages();
+          // Reload chats when returning
+          _loadActiveChats();
         });
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayCharacters = filteredCharacters;
+    if (_isLoading) {
+      return SliverFillRemaining(
+        child: Center(
+          child: CircularProgressIndicator(color: widget.colors.primary),
+        ),
+      );
+    }
 
-    if (displayCharacters.isEmpty) {
+    final displayChats = filteredChats;
+
+    if (displayChats.isEmpty) {
       return _buildEmptyState();
     }
 
@@ -150,42 +134,61 @@ class _ChatContentState extends State<ChatContent> {
       padding: const EdgeInsets.only(top: 8),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
-          final character = displayCharacters[index];
+          final chatData = displayChats[index];
+          final character = _activeChatToCharacter(chatData);
+
           return ChatCard(
             character: character,
             colors: widget.colors,
-            onTap: () => _onCharacterTap(context, character),
-            lastMessagePreview: _lastMessagePreviews[character.id],
+            onTap: () => _onCharacterTap(context, chatData),
+            bookTitle:
+                chatData.bookTitle, // Show which book the character is from
           );
-        }, childCount: displayCharacters.length),
+        }, childCount: displayChats.length),
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final bool isSearching = widget.searchQuery.isNotEmpty;
+
     return SliverFillRemaining(
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              widget.searchQuery.isEmpty
-                  ? Icons.chat_bubble_outline
-                  : Icons.search_off,
-              size: 64,
-              color: widget.colors.iconDefault,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.searchQuery.isEmpty
-                  ? 'No hay chats todavía'
-                  : 'No se encontraron resultados',
-              style: TextStyle(
-                fontSize: 16,
-                color: widget.colors.textSecondary,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSearching ? Icons.search_off : Icons.chat_bubble_outline,
+                size: 64,
+                color: widget.colors.iconDefault,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                isSearching
+                    ? 'No se encontraron resultados'
+                    : 'No active chats yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: widget.colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (!isSearching) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Open a book and tap on a character to start chatting with them.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: widget.colors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

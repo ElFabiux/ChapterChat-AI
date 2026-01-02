@@ -1,6 +1,3 @@
-// ============================================================
-// IMPORTS DE AUTENTICACIÓN (COMENTADOS TEMPORALMENTE)
-// ============================================================
 import 'package:chapter_chat_ai/blocs/book/bloc/book_bloc.dart';
 import 'package:chapter_chat_ai/blocs/book/repository/book_repository.dart';
 import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_bloc.dart';
@@ -15,6 +12,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,18 +22,27 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/theme_provider.dart';
 import 'blocs/chat/repository/chat_local_storage.dart';
+import 'blocs/chat/repository/active_chats_storage.dart';
 import 'screens/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ============================================================
-  // FIREBASE COMENTADO TEMPORALMENTE
+  // FIREBASE INITIALIZATION
   // ============================================================
   await Firebase.initializeApp();
 
+  // ============================================================
+  // HIVE INITIALIZATION (Local Storage)
+  // ============================================================
+  await Hive.initFlutter();
   await ChatLocalStorage.initialize();
+  await ActiveChatsStorage.initialize();
 
+  // ============================================================
+  // GEMINI INITIALIZATION
+  // ============================================================
   try {
     await dotenv.load(fileName: ".env");
     final apiKey = dotenv.env['GEMINI_API_KEY'];
@@ -46,9 +53,6 @@ void main() async {
   }
 
   runApp(
-    // ============================================================
-    // BLOC PROVIDERS COMENTADOS TEMPORALMENTE
-    // ============================================================
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthBloc(AuthRepository())),
@@ -63,13 +67,6 @@ void main() async {
         child: const MyApp(),
       ),
     ),
-
-    // 👇 VERSIÓN SIN AUTENTICACIÓN - CARGA DIRECTO AL HOME
-    //   ChangeNotifierProvider(
-    //     create: (_) => ThemeProvider(),
-    //     child: const MyApp(),
-    //   ),
-    // );
   );
 }
 
@@ -93,14 +90,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
 
-    updateSystemUI(themeProvider); // 🔥 Actualiza barra de estado y navegación
+    updateSystemUI(themeProvider);
 
     return MaterialApp(
-      title: 'Mi Biblioteca',
+      title: 'ChapterChat AI',
       debugShowCheckedModeBanner: false,
-
       themeMode: themeProvider.themeMode,
-
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
@@ -112,7 +107,6 @@ class MyApp extends StatelessWidget {
           error: AppColors.error,
         ),
       ),
-
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
@@ -124,26 +118,16 @@ class MyApp extends StatelessWidget {
           error: AppColors.error,
         ),
       ),
-
-      // ============================================================
-      // PANTALLA DE LOGIN COMENTADA TEMPORALMENTE
-      // ============================================================
       home: StreamBuilder<User?>(
-        stream:
-            FirebaseAuth.instance
-                .authStateChanges(), // Escucha cambios de autenticación
+        stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            ); // Muestra un indicador mientras se verifica el estado
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return const LogginScreen();
           } else if (snapshot.hasData) {
-            // Si el usuario está autenticado, muestra la pantalla principal
             return const MainShell();
           } else {
-            // Si el usuario no está autenticado, muestra la pantalla de login
             return const LogginScreen();
           }
         },
