@@ -34,8 +34,8 @@ class _ShopBookDetailScreenState extends State<ShopBookDetailScreen> {
     _book = widget.book;
   }
 
-  void _onBuyPressed() {
-    CardInputBottomSheet.show(
+  void _onBuyPressed() async {
+    await CardInputBottomSheet.show(
       context,
       book: _book,
     ); //AQUI HABIA UN AWAIT RARITO

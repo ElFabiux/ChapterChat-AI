@@ -1,24 +1,5 @@
-<<<<<<< HEAD
-import 'package:chapter_chat_ai/blocs/book/bloc/book_bloc.dart';
-import 'package:chapter_chat_ai/blocs/book/repository/book_repository.dart';
-import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_bloc.dart';
-import 'package:chapter_chat_ai/blocs/loggin/repository/loggin_repository.dart';
 import 'package:chapter_chat_ai/blocs/payment/bloc/payment_bloc.dart';
 import 'package:chapter_chat_ai/blocs/payment/reporitory/payment_repository.dart';
-import 'package:chapter_chat_ai/blocs/signup/repository/signup_repository.dart';
-import 'package:chapter_chat_ai/blocs/signup/bloc/signup_bloc.dart';
-import 'package:chapter_chat_ai/blocs/user/repository/user_repository.dart';
-import 'package:chapter_chat_ai/blocs/user/bloc/user_bloc.dart';
-import 'package:chapter_chat_ai/blocs/user/bloc/user_event.dart';
-import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-
-=======
->>>>>>> fabiux
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -85,11 +66,9 @@ void main() async {
         BlocProvider(create: (_) => AuthBloc(AuthRepository())),
         BlocProvider(create: (_) => SignupBloc(SignupRepository())),
         BlocProvider(create: (_) => BookBloc(BookRepository())),
-<<<<<<< HEAD
         BlocProvider(create: (_) => PaymentBloc(PaymentRepository())),
-=======
         BlocProvider(create: (_) => LibraryBloc()),
->>>>>>> fabiux
+
         BlocProvider(
           create: (_) => ProfileBloc(UserRepository())..add(LoadProfile()),
         ),

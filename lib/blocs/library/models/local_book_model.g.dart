@@ -21,7 +21,7 @@ class LocalBookModelAdapter extends TypeAdapter<LocalBookModel> {
       title: fields[1] as String,
       author: fields[2] as String,
       description: fields[3] as String?,
-      genres: (fields[4] as List).cast<String>(),
+      genres: (fields[4] as List?)?.cast<String>() ?? [],
       language: fields[5] as String,
       pages: fields[6] as int,
       price: fields[7] as double,
@@ -37,7 +37,7 @@ class LocalBookModelAdapter extends TypeAdapter<LocalBookModel> {
       lastReadAt: fields[18] as DateTime,
       isDownloaded: fields[19] as bool,
       isRead: fields[20] as bool,
-      characters: (fields[21] as List).cast<LocalCharacterModel>(),
+      characters: (fields[21] as List?)?.cast<LocalCharacterModel>() ?? [],
     );
   }
 
