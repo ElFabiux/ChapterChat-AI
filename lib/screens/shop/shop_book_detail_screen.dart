@@ -1,5 +1,4 @@
 import 'package:chapter_chat_ai/screens/shop/card_data_screen.dart';
-import 'package:chapter_chat_ai/screens/shop/card_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
@@ -35,10 +34,7 @@ class _ShopBookDetailScreenState extends State<ShopBookDetailScreen> {
   }
 
   void _onBuyPressed() async {
-    await CardInputBottomSheet.show(
-      context,
-      book: _book,
-    ); //AQUI HABIA UN AWAIT RARITO
+    await CardInputBottomSheet.show(context, book: _book);
 
     setState(() {
       _book = _book.copyWith(isPurchased: true);
@@ -93,9 +89,7 @@ class _ShopBookDetailScreenState extends State<ShopBookDetailScreen> {
           setState(() {
             _book = _book.copyWith(isPurchased: true, isDownloaded: true);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Book purchased successfully!')),
-          );
+          // Note: Success snackbar is shown by CardInputBottomSheet
         } else if (state.status == LibraryStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage ?? 'Purchase failed')),

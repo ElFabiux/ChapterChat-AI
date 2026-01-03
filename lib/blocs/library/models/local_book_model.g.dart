@@ -30,13 +30,13 @@ class LocalBookModelAdapter extends TypeAdapter<LocalBookModel> {
       storySetting: fields[10] as String?,
       pdfUrl: fields[11] as String,
       localPdfPath: fields[12] as String?,
-      readingProgress: fields[14] as double,
-      currentPage: fields[15] as int,
-      totalPages: fields[16] as int,
+      readingProgress: fields[14] as double? ?? 0.0,
+      currentPage: fields[15] as int? ?? 0,
+      totalPages: fields[16] as int? ?? 0,
       purchasedAt: fields[17] as DateTime,
       lastReadAt: fields[18] as DateTime,
-      isDownloaded: fields[19] as bool,
-      isRead: fields[20] as bool,
+      isDownloaded: fields[19] as bool? ?? false,
+      isRead: fields[20] as bool? ?? false,
       characters: (fields[21] as List?)?.cast<LocalCharacterModel>() ?? [],
     );
   }
@@ -44,7 +44,7 @@ class LocalBookModelAdapter extends TypeAdapter<LocalBookModel> {
   @override
   void write(BinaryWriter writer, LocalBookModel obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

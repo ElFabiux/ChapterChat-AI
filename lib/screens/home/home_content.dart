@@ -135,7 +135,6 @@ class _HomeContentState extends State<HomeContent> {
       publisher: localBook.publisher,
       setting: localBook.storySetting,
       pdfUrl: localBook.pdfUrl,
-      //localCoverPath: localBook.localCoverPath, ------------------------------------
       isPurchased: true,
       isDownloaded: localBook.isDownloaded,
       readingProgress: localBook.readingProgress,
