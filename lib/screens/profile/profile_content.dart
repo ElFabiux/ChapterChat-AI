@@ -4,7 +4,9 @@ import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_state.dart';
 import 'package:chapter_chat_ai/blocs/user/bloc/user_bloc.dart';
 import 'package:chapter_chat_ai/blocs/user/bloc/user_event.dart';
 import 'package:chapter_chat_ai/blocs/user/bloc/user_state.dart';
+import 'package:chapter_chat_ai/core/user/user_provider.dart';
 import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
+import 'package:chapter_chat_ai/screens/shop/card_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
@@ -21,12 +23,10 @@ class ProfileContent extends StatefulWidget {
 }
 
 class _ProfileContentState extends State<ProfileContent> {
-  bool _isPremium = false; // Estado del plan (Free o Premium)
-
-  void _onPlanSelected(bool premium) {
-    setState(() {
-      _isPremium = premium;
-    });
+  void _onPlanSelected(bool premium) async {
+    if (premium) return;
+    await CardInputBottomSheet.show(context, null, isMembership: true);
+    context.read<ProfileBloc>().add(LoadProfile());
   }
 
   void _onLogout() {
@@ -36,6 +36,18 @@ class _ProfileContentState extends State<ProfileContent> {
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
+    final user = context.watch<UserProvider>().user;
+
+    if (user == null) {
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final name = user.name;
+    final lastname = user.lastname;
+    final isPremium = user.isPremium;
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
@@ -52,181 +64,155 @@ class _ProfileContentState extends State<ProfileContent> {
           ).showSnackBar(SnackBar(content: Text(state.error)));
         }
       },
-      child: BlocBuilder<ProfileBloc, ProfileState>(
-        builder: (context, state) {
-          if (state is ProfileLoading) {
-            return const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (state is ProfileError) {
-            return SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Text(
-                  'Error: ${state.error}',
-                  style: TextStyle(color: colors.textPrimary),
+      child: SliverFillRemaining(
+        hasScrollBody: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+
+              // Avatar del usuario
+              Container(
+                width: 100,
+                height: 100,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.deepPurple,
+                ),
+                child: Center(
+                  child: Text(
+                    name.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 44,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
-            );
-          }
-          if (state is ProfileLoaded) {
-            return SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
+
+              const SizedBox(height: 12),
+
+              // Saludo con nombre
+              Text(
+                'Hi, ${name} ${lastname}',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Opciones: Theme toggle y Settings
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Theme toggle button
+                  _buildThemeToggle(),
+
+                  const SizedBox(width: 12),
+
+                  // Settings button
+                  _buildIconButton(
+                    icon: Icons.settings_outlined,
+                    onTap: () {
+                      debugPrint('Settings pressed');
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Logout button
+              _buildLogoutButton(),
+
+              const SizedBox(height: 20),
+
+              // Plan cards - Expanded para ocupar el espacio disponible
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
-
-                    // Avatar del usuario
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.deepPurple,
-                      ),
-                      child: Center(
-                        child: Text(
-                          state.name.substring(0, 1).toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 44,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Saludo con nombre
-                    Text(
-                      'Hi, ${state.name} ${state.lastname}',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Opciones: Theme toggle y Settings
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Theme toggle button
-                        _buildThemeToggle(),
-
-                        const SizedBox(width: 12),
-
-                        // Settings button
-                        _buildIconButton(
-                          icon: Icons.settings_outlined,
-                          onTap: () {
-                            debugPrint('Settings pressed');
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Logout button
-                    _buildLogoutButton(),
-
-                    const SizedBox(height: 20),
-
-                    // Plan cards - Expanded para ocupar el espacio disponible
+                    // Free Plan
                     Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Free Plan
-                          Expanded(
-                            child: PlanCard(
-                              title: 'Free',
-                              isSelected: !_isPremium,
-                              isPremium: false,
-                              colors: colors,
-                              onTap: () => _onPlanSelected(false),
-                              features: [
-                                PlanFeature(
-                                  icon: Icons.library_books_outlined,
-                                  text: 'Personal library management',
-                                  iconColor: colors.primary,
-                                ),
-                                PlanFeature(
-                                  icon: Icons.search,
-                                  text: 'Book search',
-                                  iconColor: Colors.amber,
-                                ),
-                                PlanFeature(
-                                  icon: Icons.check_circle_outline,
-                                  text: 'Mark books as read',
-                                  iconColor: Colors.green,
-                                ),
-                                PlanFeature(
-                                  icon: Icons.storefront_outlined,
-                                  text: 'Book shop',
-                                  iconColor: Colors.purple,
-                                ),
-                              ],
-                            ),
+                      child: PlanCard(
+                        title: 'Free',
+                        isSelected: !isPremium,
+                        isPremium: false,
+                        colors: colors,
+                        onTap: () => () {},
+                        features: [
+                          PlanFeature(
+                            icon: Icons.library_books_outlined,
+                            text: 'Personal library management',
+                            iconColor: colors.primary,
                           ),
-
-                          const SizedBox(width: 16),
-
-                          // Premium Plan
-                          Expanded(
-                            child: PlanCard(
-                              title: 'Premium',
-                              isSelected: _isPremium,
-                              isPremium: true,
-                              colors: colors,
-                              onTap: () => _onPlanSelected(true),
-                              features: [
-                                PlanFeature(
-                                  icon: Icons.verified_outlined,
-                                  text: 'Everything in Free Plan',
-                                  iconColor: colors.primary,
-                                ),
-                                PlanFeature(
-                                  icon: Icons.auto_awesome,
-                                  text: 'AI chats with characters',
-                                  iconColor: Colors.amber,
-                                ),
-                                PlanFeature(
-                                  icon: Icons.summarize_outlined,
-                                  text: 'AI automatic summaries',
-                                  iconColor: Colors.orange,
-                                ),
-                              ],
-                            ),
+                          PlanFeature(
+                            icon: Icons.search,
+                            text: 'Book search',
+                            iconColor: Colors.amber,
+                          ),
+                          PlanFeature(
+                            icon: Icons.check_circle_outline,
+                            text: 'Mark books as read',
+                            iconColor: Colors.green,
+                          ),
+                          PlanFeature(
+                            icon: Icons.storefront_outlined,
+                            text: 'Book shop',
+                            iconColor: Colors.purple,
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(width: 16),
 
-                    // Footer
-                    _buildFooter(),
-
-                    const SizedBox(height: 8),
+                    // Premium Plan
+                    Expanded(
+                      child: PlanCard(
+                        title: 'Premium',
+                        subtitle: '\$9,99/month',
+                        isSelected: isPremium,
+                        isPremium: true,
+                        colors: colors,
+                        onTap: () => _onPlanSelected(isPremium),
+                        features: [
+                          PlanFeature(
+                            icon: Icons.verified_outlined,
+                            text: 'Everything in Free Plan',
+                            iconColor: colors.primary,
+                          ),
+                          PlanFeature(
+                            icon: Icons.auto_awesome,
+                            text: 'AI chats with characters',
+                            iconColor: Colors.amber,
+                          ),
+                          PlanFeature(
+                            icon: Icons.summarize_outlined,
+                            text: 'AI automatic summaries',
+                            iconColor: Colors.orange,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            );
-          }
-          return const SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(child: Text('Unknown state')),
-          );
-        },
+
+              const SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }

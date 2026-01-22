@@ -11,6 +11,7 @@ class PlanFeature {
 
 class PlanCard extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final List<PlanFeature> features;
   final bool isSelected;
   final bool isPremium;
@@ -20,6 +21,7 @@ class PlanCard extends StatelessWidget {
   const PlanCard({
     super.key,
     required this.title,
+    this.subtitle,
     required this.features,
     required this.isSelected,
     required this.colors,
@@ -57,6 +59,7 @@ class PlanCard extends StatelessWidget {
               ),
             ),
 
+            // Subtítulo del plan (opcional)
             const SizedBox(height: 16),
 
             // Lista de características
@@ -87,6 +90,14 @@ class PlanCard extends StatelessWidget {
               ),
             ),
 
+            if (subtitle != null)
+              Center(
+                child: Text(
+                  subtitle!,
+                  style: TextStyle(fontSize: 16, color: colors.textSecondary),
+                ),
+              ),
+            const SizedBox(height: 12),
             const Spacer(),
 
             // Radio button de selección

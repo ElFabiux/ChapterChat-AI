@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:chapter_chat_ai/blocs/payment/bloc/payment_event.dart';
 import 'package:chapter_chat_ai/blocs/payment/bloc/payment_state.dart';
 import 'package:chapter_chat_ai/blocs/payment/models/payment_model.dart';
@@ -9,7 +11,8 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   final PaymentRepository paymentRepository;
 
   PaymentBloc(this.paymentRepository) : super((PaymentInitial())) {
-    on<PaymentRequested>(_onPaymentRequested);
+    on<PaymentBookRequested>(_onPaymentBookRequested);
+    on<PaymentMembershipRequested>(_onPaymentMembershipRequested);
   }
 
   String getErrorMessage(int code) {
@@ -27,8 +30,39 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     }
   }
 
-  Future<void> _onPaymentRequested(
-    PaymentRequested event,
+  Future<void> _onPaymentMembershipRequested(
+    PaymentMembershipRequested event,
+    Emitter<PaymentState> emit,
+  ) async {
+    emit(PaymentLoading());
+    try {
+      final results = await Future.wait([
+        paymentRepository.pay(event.card),
+        Future.delayed(const Duration(seconds: 2)), // Mínimo 2 segundos
+      ]);
+      final payment = results[0] as PaymentModel;
+      if (payment.code == 200) {
+        await paymentRepository.saveMembershipTransaction(
+          payment.id,
+          event.membership,
+          event.card,
+        );
+
+        emit(
+          PaymentSuccess(
+            confirmationMessage: "Membership activated successfully.",
+          ),
+        );
+      } else {
+        emit(PaymentFailure(error: getErrorMessage(payment.code)));
+      }
+    } catch (e) {
+      emit(PaymentFailure(error: "Payment Error: ${e.toString()}"));
+    }
+  }
+
+  Future<void> _onPaymentBookRequested(
+    PaymentBookRequested event,
     Emitter<PaymentState> emit,
   ) async {
     emit(PaymentLoading());
@@ -40,12 +74,14 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
 
       final payment = results[0] as PaymentModel;
       if (payment.code == 200) {
-        await paymentRepository.saveTransaction(
+        await paymentRepository.saveBookTransaction(
           payment.id,
           event.book,
           event.card,
         );
-        emit(PaymentSuccess());
+        emit(
+          PaymentSuccess(confirmationMessage: "Book purchased successfully."),
+        );
       } else {
         emit(PaymentFailure(error: getErrorMessage(payment.code)));
       }

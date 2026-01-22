@@ -1,4 +1,7 @@
+import 'package:chapter_chat_ai/blocs/user/bloc/user_bloc.dart';
+import 'package:chapter_chat_ai/blocs/user/bloc/user_event.dart';
 import 'package:chapter_chat_ai/core/theme/theme_provider.dart';
+import 'package:chapter_chat_ai/core/user/user_provider.dart';
 import 'package:chapter_chat_ai/screens/auth/signup_screen.dart';
 import 'package:chapter_chat_ai/screens/main_shell.dart';
 import 'package:chapter_chat_ai/widgets/components/custom_button.dart';
@@ -60,6 +63,7 @@ class _LogginScreenState extends State<LogginScreen> {
           }
 
           if (state is AuthSuccess) {
+            context.read<ProfileBloc>().add(LoadProfile());
             Navigator.pop(context);
             Navigator.pushReplacement(
               context,

@@ -9,8 +9,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc(this.repo) : super(ProfileLoading()) {
     on<LoadProfile>((event, emit) async {
       try {
-        final data = await repo.getProfile();
-        emit(ProfileLoaded(data['name'] ?? "", data['lastname'] ?? ""));
+        final user = await repo.getProfile();
+        emit(ProfileLoaded(user));
       } catch (e) {
         emit(ProfileError(e.toString()));
       }

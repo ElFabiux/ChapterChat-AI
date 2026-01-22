@@ -18,4 +18,11 @@ class PaymentFailure extends PaymentState {
   List<Object?> get props => [error];
 }
 
-class PaymentSuccess extends PaymentState {}
+class PaymentSuccess extends PaymentState {
+  final String confirmationMessage;
+
+  PaymentSuccess({required this.confirmationMessage});
+
+  @override
+  List<Object?> get props => [confirmationMessage];
+}

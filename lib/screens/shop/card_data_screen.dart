@@ -10,18 +10,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CardInputBottomSheet extends StatefulWidget {
   final Function(CardData) onSubmit;
-  final Book book;
+  final Book? book;
+  final bool isMembership;
 
   const CardInputBottomSheet({
     Key? key,
     required this.onSubmit,
-    required this.book,
+    this.book,
+    required this.isMembership,
   }) : super(key: key);
 
   @override
   State<CardInputBottomSheet> createState() => _CardInputBottomSheetState();
 
-  static Future<CardData?> show(BuildContext context, {required Book book}) {
+  static Future<CardData?> show(
+    BuildContext context,
+    Book? book, {
+    required bool isMembership,
+  }) {
     return showModalBottomSheet<CardData>(
       context: context,
 
@@ -33,9 +39,15 @@ class CardInputBottomSheet extends StatefulWidget {
           (context) => CardInputBottomSheet(
             onSubmit:
                 (cardData) => context.read<PaymentBloc>().add(
-                  PaymentRequested(card: cardData, book: book),
+                  isMembership
+                      ? PaymentMembershipRequested(
+                        card: cardData,
+                        membership: 'premium',
+                      )
+                      : PaymentBookRequested(card: cardData, book: book!),
                 ),
             book: book,
+            isMembership: isMembership,
           ),
     );
   }
@@ -138,9 +150,9 @@ class _CardInputBottomSheetState extends State<CardInputBottomSheet> {
         if (state is PaymentSuccess) {
           Navigator.of(context, rootNavigator: true).pop();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Book bought successfully!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.confirmationMessage)));
           Navigator.pop(context);
         }
       },

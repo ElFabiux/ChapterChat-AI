@@ -1,3 +1,4 @@
+import 'package:chapter_chat_ai/blocs/payment/models/card_data_model.dart';
 import 'package:chapter_chat_ai/screens/shop/card_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,11 +35,7 @@ class _ShopBookDetailScreenState extends State<ShopBookDetailScreen> {
   }
 
   void _onBuyPressed() async {
-    await CardInputBottomSheet.show(context, book: _book);
-
-    setState(() {
-      _book = _book.copyWith(isPurchased: true);
-    });
+    CardInputBottomSheet.show(context, _book, isMembership: false);
 
     if (_book.pdfUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(

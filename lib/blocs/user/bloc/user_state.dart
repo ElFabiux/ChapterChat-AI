@@ -1,12 +1,12 @@
+import 'package:chapter_chat_ai/blocs/user/models/user_model.dart';
+
 abstract class ProfileState {}
 
 class ProfileLoading extends ProfileState {}
 
 class ProfileLoaded extends ProfileState {
-  final String name;
-  final String lastname;
-
-  ProfileLoaded(this.name, this.lastname);
+  final UserModel user;
+  ProfileLoaded(this.user);
 }
 
 class ProfileError extends ProfileState {

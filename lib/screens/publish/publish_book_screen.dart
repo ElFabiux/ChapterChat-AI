@@ -206,6 +206,7 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Book published successfully!')),
           );
+          context.read<BookBloc>().add(FetchBooksRequested());
           Navigator.pop(context);
         } else if (state is BookFailure) {
           ScaffoldMessenger.of(

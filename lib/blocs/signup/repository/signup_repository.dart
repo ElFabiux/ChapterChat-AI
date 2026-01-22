@@ -28,6 +28,8 @@ class SignupRepository {
           'email': email,
           "birthdate": Timestamp.fromDate(birthdate),
           "role": role,
+          'membership': 'free',
+          'membershipDueDate': null,
           'createdAt': FieldValue.serverTimestamp(),
         });
       }

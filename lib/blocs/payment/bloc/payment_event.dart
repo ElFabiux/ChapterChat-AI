@@ -7,11 +7,21 @@ abstract class PaymentEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class PaymentRequested extends PaymentEvent {
+class PaymentMembershipRequested extends PaymentEvent {
+  final CardData card;
+  final String membership;
+
+  PaymentMembershipRequested({required this.card, required this.membership});
+
+  @override
+  List<Object?> get props => [card, membership];
+}
+
+class PaymentBookRequested extends PaymentEvent {
   final CardData card;
   final Book book;
 
-  PaymentRequested({required this.card, required this.book});
+  PaymentBookRequested({required this.card, required this.book});
 
   @override
   List<Object?> get props => [card, book];
