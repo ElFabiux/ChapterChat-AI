@@ -30,6 +30,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatDeleteMessage>(_onDeleteMessage);
     on<ChatUpdateRateLimitCountdown>(_onUpdateRateLimitCountdown);
     on<ChatRateLimitExpired>(_onRateLimitExpired);
+    on<ClearLocalData>((event, emit) async {
+      await _repository.clearLocalData();
+      emit(ChatState.initial());
+    });
   }
 
   @override

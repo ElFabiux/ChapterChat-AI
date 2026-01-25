@@ -1,3 +1,6 @@
+import 'package:chapter_chat_ai/blocs/user/repository/user_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'loggin_event.dart';
 import 'loggin_state.dart';
@@ -5,8 +8,10 @@ import '../repository/loggin_repository.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
+  final UserRepository userRepository;
 
-  AuthBloc(this.authRepository) : super(AuthInitial()) {
+  AuthBloc({required this.authRepository, required this.userRepository})
+    : super(AuthInitial()) {
     on<LoginRequested>(_onLogginRequested);
     on<LogoutRequested>(_onLogoutRequested);
   }
@@ -18,7 +23,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.login(event.email, event.password);
-      emit(AuthSuccess());
+      // Load profile here
+      final user = await userRepository.getProfile();
+
+      emit(AuthSuccess(user: user)); // Pass user to success state
     } catch (e) {
       emit(AuthFailure(error: "Login Failed: ${e.toString()}"));
     }

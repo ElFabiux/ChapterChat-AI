@@ -1,3 +1,8 @@
+import 'package:chapter_chat_ai/blocs/chat/repository/active_chats_storage.dart';
+import 'package:chapter_chat_ai/blocs/library/repository/library_local_storage.dart';
+import 'package:chapter_chat_ai/core/theme/theme_provider.dart';
+import 'package:flutter/material.dart';
+
 import '../../../models/chat_message.dart';
 import '../../../models/chat_character.dart';
 import '../models/chat_message_entity.dart';
@@ -115,5 +120,16 @@ class ChatRepository {
       print('❌ Error clearing all data: $e');
       return false;
     }
+  }
+
+  Future<void> clearLocalData() async {
+    // 1. Limpiar todos los chats
+    await clearAllData();
+
+    // 2. Limpiar biblioteca (libros guardados)
+    await LibraryLocalStorage.instance.clearAll();
+
+    // 3. Limpiar chats activos
+    await ActiveChatsStorage.instance.clearAll();
   }
 }

@@ -39,21 +39,8 @@ class _LogginScreenState extends State<LogginScreen> {
       backgroundColor: theme.colors.background,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthLoading) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder:
-                  (_) => Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colors.primary,
-                    ),
-                  ),
-            );
-          }
-
+          debugPrint('Auth State changed: $state');
           if (state is AuthFailure) {
-            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.error),
@@ -63,8 +50,9 @@ class _LogginScreenState extends State<LogginScreen> {
           }
 
           if (state is AuthSuccess) {
-            context.read<ProfileBloc>().add(LoadProfile());
-            Navigator.pop(context);
+            // Update ProfileBloc with the loaded user
+            context.read<ProfileBloc>().add(UpdateProfile(state.user));
+            context.read<UserProvider>().setUser(state.user);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MainShell()),
@@ -174,12 +162,14 @@ class _LogginScreenState extends State<LogginScreen> {
                               text: 'Sign in',
                               isLoading: state is AuthLoading,
                               onPressed: () {
-                                final email = emailCtrl.text.trim();
-                                final pass = passCtrl.text.trim();
-
-                                context.read<AuthBloc>().add(
-                                  LoginRequested(email: email, password: pass),
-                                );
+                                if (state is! AuthLoading) {
+                                  context.read<AuthBloc>().add(
+                                    LoginRequested(
+                                      email: emailCtrl.text.trim(),
+                                      password: passCtrl.text.trim(),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                           );

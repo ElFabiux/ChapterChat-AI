@@ -127,6 +127,26 @@ class AdProvider extends ChangeNotifier {
     }
   }
 
+  void getRewarded(bool isPremium, VoidCallback onAdEarned) {
+    if (isPremium) {
+      onAdEarned();
+      return;
+    }
+
+    if (isRewardedLoaded && getRewardedAd != null) {
+      getRewardedAd!.show(onUserEarnedReward: (ad, reward) {});
+
+      getRewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          onAdEarned();
+          ad.dispose();
+        },
+      );
+    } else {
+      onAdEarned(); // fallback
+    }
+  }
+
   Widget getNativeWidget(bool isPremium) {
     if (isPremium) return const SizedBox.shrink();
     if (!_nativeLoaded || _nativeAd == null) {

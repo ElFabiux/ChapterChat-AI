@@ -5,6 +5,8 @@ import 'package:chapter_chat_ai/blocs/book/bloc/book_event.dart';
 import 'package:chapter_chat_ai/blocs/book/bloc/book_state.dart';
 import 'package:chapter_chat_ai/blocs/book/models/book_model.dart';
 import 'package:chapter_chat_ai/blocs/book/models/character_model.dart';
+import 'package:chapter_chat_ai/core/ads/ad_provider.dart';
+import 'package:chapter_chat_ai/core/user/user_provider.dart';
 import 'package:chapter_chat_ai/models/book.dart';
 import 'package:chapter_chat_ai/widgets/form/multi_selector.dart';
 import 'package:file_picker/file_picker.dart';
@@ -144,6 +146,7 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
   }
 
   void _onPublish() {
+    if (!mounted) return; // 🔑 CLAVE
     setState(() {
       _hasTriedToSubmit = true;
       _pdfHasError = _pdfFileName == null;
@@ -186,6 +189,8 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.watch<ThemeProvider>().colors;
+    final _isPremium = context.watch<UserProvider>().user!.isPremium;
+    final ads = context.watch<AdProvider>();
 
     return BlocListener<BookBloc, BookState>(
       listener: (context, state) {
@@ -457,7 +462,9 @@ class _PublishBookScreenState extends State<PublishBookScreen> {
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: _onPublish,
+                          onPressed: () {
+                            ads.getRewarded(_isPremium, _onPublish);
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
                             foregroundColor: Colors.white,

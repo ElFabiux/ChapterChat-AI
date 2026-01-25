@@ -15,5 +15,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         emit(ProfileError(e.toString()));
       }
     });
+    on<UpdateProfile>((event, emit) {
+      // Directly update with already-loaded user
+      emit(ProfileLoaded(event.user));
+    });
+    on<DowngradeToFreePlan>((event, emit) async {
+      try {
+        emit(ProfileLoading());
+        await repo.downgradeToFreePlan();
+        final updatedUser = await repo.getProfile();
+        emit(ProfileLoaded(updatedUser));
+      } catch (e) {
+        emit(ProfileError(e.toString()));
+      }
+    });
   }
 }

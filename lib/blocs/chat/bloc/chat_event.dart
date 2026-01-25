@@ -20,6 +20,13 @@ class ChatLoadMessages extends ChatEvent {
   List<Object?> get props => [character.id];
 }
 
+class ClearLocalData extends ChatEvent {
+  const ClearLocalData();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Event to send a text message
 class ChatSendTextMessage extends ChatEvent {
   final String text;

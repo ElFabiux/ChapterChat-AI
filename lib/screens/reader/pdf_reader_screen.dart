@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:chapter_chat_ai/core/ads/ad_provider.dart';
+import 'package:chapter_chat_ai/core/user/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -151,54 +153,89 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.isDarkMode;
     final backgroundColor = isDark ? Colors.black : Colors.white;
+    final ads = context.watch<AdProvider>();
+    final isPremium = context.watch<UserProvider>().user!.isPremium;
 
     // Set system UI for immersive reading
     SystemChrome.setEnabledSystemUIMode(
       _showControls ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
     );
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body:
-          _error != null
-              ? _buildErrorState(themeProvider)
-              : LayoutBuilder(
-                builder: (context, constraints) {
-                  return GestureDetector(
-                    onHorizontalDragEnd: (details) {
-                      if (details.primaryVelocity == null) return;
+    return WillPopScope(
+      onWillPop: () async {
+        if (!_showControls) {
+          setState(() {
+            _showControls = true;
+          });
 
-                      if (details.primaryVelocity! < -100) {
-                        // Swipe left (right to left) - next page
-                        _goToNextPage();
-                      } else if (details.primaryVelocity! > 100) {
-                        // Swipe right (left to right) - previous page
-                        _goToPreviousPage();
-                      }
-                    },
-                    onTapUp: (details) => _handleTap(details, constraints),
-                    onLongPress: _toggleControls,
-                    child: Stack(
-                      children: [
-                        // PDF Page Content
-                        _buildPageContent(backgroundColor, constraints),
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+          return true;
+        } else {
+          return true;
+        }
+      },
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: backgroundColor,
+          body:
+              _error != null
+                  ? _buildErrorState(themeProvider)
+                  : LayoutBuilder(
+                    builder: (context, constraints) {
+                      return GestureDetector(
+                        onHorizontalDragEnd: (details) {
+                          if (details.primaryVelocity == null) return;
 
-                        // Loading indicator
-                        if (_isLoading)
-                          Center(
-                            child: CircularProgressIndicator(
-                              color: themeProvider.colors.primary,
+                          if (details.primaryVelocity! < -100) {
+                            // Swipe left (right to left) - next page
+                            _goToNextPage();
+                          } else if (details.primaryVelocity! > 100) {
+                            // Swipe right (left to right) - previous page
+                            _goToPreviousPage();
+                          }
+                        },
+
+                        onTapUp: (details) => _handleTap(details, constraints),
+                        onLongPress: _toggleControls,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  // PDF Page Content
+                                  _buildPageContent(
+                                    backgroundColor,
+                                    constraints,
+                                  ),
+
+                                  // Loading indicator
+                                  if (_isLoading)
+                                    Center(
+                                      child: CircularProgressIndicator(
+                                        color: themeProvider.colors.primary,
+                                      ),
+                                    ),
+
+                                  // Controls overlay
+                                  if (_showControls)
+                                    _buildControlsOverlay(
+                                      themeProvider,
+                                      backgroundColor,
+                                    ),
+                                  // Ad banner at the bottom
+                                ],
+                              ),
                             ),
-                          ),
-
-                        // Controls overlay
-                        if (_showControls)
-                          _buildControlsOverlay(themeProvider, backgroundColor),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                            const SizedBox(height: 8),
+                            ads.getBannerWidget(isPremium),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+        ),
+      ),
     );
   }
 
@@ -326,39 +363,41 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
   Widget _buildErrorState(ThemeProvider themeProvider) {
     final colors = themeProvider.colors;
 
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: colors.error),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading PDF',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
+    return Center(
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: colors.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading PDF',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _error ?? 'Unknown error',
-                style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
+                const SizedBox(height: 8),
+                Text(
+                  _error ?? 'Unknown error',
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
-                child: const Text('Go Back'),
-              ),
-            ],
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Go Back'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,3 +1,5 @@
+import 'package:chapter_chat_ai/blocs/chat/bloc/chat_bloc.dart';
+import 'package:chapter_chat_ai/blocs/chat/bloc/chat_event.dart';
 import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_bloc.dart';
 import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_event.dart';
 import 'package:chapter_chat_ai/blocs/loggin/bloc/loggin_state.dart';
@@ -7,6 +9,7 @@ import 'package:chapter_chat_ai/blocs/user/bloc/user_state.dart';
 import 'package:chapter_chat_ai/core/user/user_provider.dart';
 import 'package:chapter_chat_ai/screens/auth/loggin_screen.dart';
 import 'package:chapter_chat_ai/screens/shop/card_data_screen.dart';
+import 'package:chapter_chat_ai/widgets/profile/settings_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
@@ -31,6 +34,152 @@ class _ProfileContentState extends State<ProfileContent> {
 
   void _onLogout() {
     context.read<AuthBloc>().add(LogoutRequested());
+  }
+
+  void _onSettings() {
+    final theme = context.read<ThemeProvider>();
+    final profileBLoc = context.read<ProfileBloc>();
+    final chatBloc = context.read<ChatBloc>();
+    final isPremium = context.read<UserProvider>().user!.isPremium;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: theme.colors.surface,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.settings,
+                        color: theme.colors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Manage your account & data',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: theme.colors.textSecondary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Divider
+                Container(
+                  height: 1,
+                  color: theme.colors.textSecondary.withOpacity(0.1),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Options
+                SettingsOption(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Change to Free Plan',
+                  subtitle: 'Downgrade your membership',
+                  iconColor: theme.colors.primary,
+                  iconBackgroundColor: theme.colors.primary.withOpacity(0.1),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    if (!isPremium) return;
+                    profileBLoc.add(DowngradeToFreePlan());
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                SettingsOption(
+                  icon: Icons.delete_outline,
+                  title: 'Clear Local Data',
+                  subtitle: 'Delete books & characters',
+                  iconColor: theme.colors.error,
+                  iconBackgroundColor: theme.colors.error.withOpacity(0.1),
+                  isDestructive: true,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    chatBloc.add(ClearLocalData());
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // Info banner
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'These actions may affect your saved data',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -92,7 +241,7 @@ class _ProfileContentState extends State<ProfileContent> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Saludo con nombre
               Text(
@@ -104,7 +253,7 @@ class _ProfileContentState extends State<ProfileContent> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Opciones: Theme toggle y Settings
               Row(
@@ -119,18 +268,18 @@ class _ProfileContentState extends State<ProfileContent> {
                   _buildIconButton(
                     icon: Icons.settings_outlined,
                     onTap: () {
-                      debugPrint('Settings pressed');
+                      _onSettings();
                     },
                   ),
                 ],
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Logout button
               _buildLogoutButton(),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Plan cards - Expanded para ocupar el espacio disponible
               Expanded(
@@ -204,7 +353,7 @@ class _ProfileContentState extends State<ProfileContent> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Footer
               _buildFooter(),

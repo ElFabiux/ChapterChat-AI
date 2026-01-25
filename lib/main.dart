@@ -1,3 +1,5 @@
+// main.dart
+import 'package:chapter_chat_ai/blocs/chat/bloc/chat_bloc.dart';
 import 'package:chapter_chat_ai/blocs/payment/bloc/payment_bloc.dart';
 import 'package:chapter_chat_ai/blocs/payment/reporitory/payment_repository.dart';
 import 'package:chapter_chat_ai/blocs/user/bloc/user_state.dart';
@@ -66,6 +68,7 @@ void main() async {
   } catch (e) {
     print('❌ Error al inicializar Gemini: $e');
   }
+
   runApp(
     MultiProvider(
       providers: [
@@ -75,11 +78,18 @@ void main() async {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => AuthBloc(AuthRepository())),
+          BlocProvider(
+            create:
+                (_) => AuthBloc(
+                  authRepository: AuthRepository(),
+                  userRepository: UserRepository(),
+                ),
+          ),
           BlocProvider(create: (_) => SignupBloc(SignupRepository())),
           BlocProvider(create: (_) => BookBloc(BookRepository())),
           BlocProvider(create: (_) => PaymentBloc(PaymentRepository())),
           BlocProvider(create: (_) => LibraryBloc()),
+          BlocProvider(create: (_) => ChatBloc()),
           BlocProvider(
             create:
                 (context) => ProfileBloc(UserRepository())..add(LoadProfile()),
@@ -113,18 +123,19 @@ class MyApp extends StatelessWidget {
 
     updateSystemUI(themeProvider);
 
+    // ⭐ Sincronizar ProfileBloc con UserProvider
     return BlocListener<ProfileBloc, ProfileState>(
       listener: (context, state) {
-        if (state is ProfileLoading) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder:
-                (context) => const Center(child: CircularProgressIndicator()),
-          );
-        }
+        debugPrint('📊 ProfileBloc state changed: ${state.runtimeType}');
+
         if (state is ProfileLoaded) {
+          debugPrint('✅ ProfileLoaded - Setting user in UserProvider');
           context.read<UserProvider>().setUser(state.user);
+        } else if (state is ProfileError) {
+          debugPrint('❌ ProfileError: ${state.error}');
+          context.read<UserProvider>().clear();
+        } else if (state is ProfileLoading) {
+          debugPrint('⏳ ProfileLoading');
         }
       },
       child: MaterialApp(
@@ -156,6 +167,11 @@ class MyApp extends StatelessWidget {
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
+            debugPrint(
+              '🔄 StreamBuilder - connectionState: ${snapshot.connectionState}',
+            );
+            debugPrint('🔄 StreamBuilder - hasData: ${snapshot.hasData}');
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 backgroundColor: themeProvider.colors.background,
@@ -166,10 +182,55 @@ class MyApp extends StatelessWidget {
                 ),
               );
             } else if (snapshot.hasError) {
+              debugPrint('❌ StreamBuilder error: ${snapshot.error}');
               return const LogginScreen();
             } else if (snapshot.hasData) {
-              return const MainShell();
+              debugPrint(
+                '✅ StreamBuilder - User authenticated: ${snapshot.data?.email}',
+              );
+
+              // ⭐ Usuario autenticado - Verificar si UserProvider está listo
+              return Consumer<UserProvider>(
+                builder: (context, userProvider, _) {
+                  debugPrint(
+                    '👤 UserProvider.isReady: ${userProvider.isReady}',
+                  );
+
+                  if (userProvider.isReady) {
+                    debugPrint('✅ UserProvider ready - Showing MainShell');
+                    return const MainShell();
+                  } else {
+                    debugPrint('⏳ UserProvider not ready - Loading profile...');
+
+                    // Asegurar que LoadProfile se dispare
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final profileBloc = context.read<ProfileBloc>();
+                      final currentState = profileBloc.state;
+
+                      debugPrint(
+                        '📊 Current ProfileBloc state: ${currentState.runtimeType}',
+                      );
+
+                      if (currentState is! ProfileLoaded &&
+                          currentState is! ProfileLoading) {
+                        debugPrint('🚀 Dispatching LoadProfile event');
+                        profileBloc.add(LoadProfile());
+                      }
+                    });
+
+                    return Scaffold(
+                      backgroundColor: themeProvider.colors.background,
+                      body: Center(
+                        child: CircularProgressIndicator(
+                          color: themeProvider.colors.primary,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              );
             } else {
+              debugPrint('🚪 No authenticated user - Showing LogginScreen');
               return const LogginScreen();
             }
           },
