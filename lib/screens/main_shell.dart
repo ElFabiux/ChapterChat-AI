@@ -166,31 +166,32 @@ class _MainShellState extends State<MainShell> {
                           ? const NeverScrollableScrollPhysics()
                           : const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    SliverAppBar(
-                      floating: true,
-                      snap: false,
-                      backgroundColor:
-                          _currentTab == NavTab.shop
-                              ? Colors.transparent
-                              : colors.background,
-                      surfaceTintColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.transparent,
-                      elevation: 0,
-                      scrolledUnderElevation: 0,
-                      toolbarHeight: 72,
-                      automaticallyImplyLeading: false,
-                      flexibleSpace: SearchHeader(
-                        colors: colors,
-                        controller: _searchController,
-                        onChanged: _onSearchChanged,
-                        onFocusChanged: _onSearchFocusChanged,
-                        hintText: _searchHintText,
-                        transparentBackground: _currentTab == NavTab.shop,
-                        showPublishButton: _currentTab == NavTab.shop,
-                        onPublishPressed: _onPublishPressed,
+                    if (_currentTab != NavTab.profile)
+                      SliverAppBar(
+                        floating: true,
+                        snap: false,
+                        backgroundColor:
+                            _currentTab == NavTab.shop
+                                ? Colors.transparent
+                                : colors.background,
+                        surfaceTintColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.transparent,
+                        elevation: 0,
+                        scrolledUnderElevation: 0,
+                        toolbarHeight: 72,
+                        automaticallyImplyLeading: false,
+                        flexibleSpace: SearchHeader(
+                          colors: colors,
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          onFocusChanged: _onSearchFocusChanged,
+                          hintText: _searchHintText,
+                          transparentBackground: _currentTab == NavTab.shop,
+                          showPublishButton: _currentTab == NavTab.shop,
+                          onPublishPressed: _onPublishPressed,
+                        ),
                       ),
-                    ),
 
                     if (_currentSectionTitle != null)
                       StickySectionHeader(

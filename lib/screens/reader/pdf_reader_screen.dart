@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:chapter_chat_ai/core/ads/ad_provider.dart';
 import 'package:chapter_chat_ai/core/user/user_provider.dart';
+import 'package:chapter_chat_ai/services/gemini_chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,7 +20,8 @@ class PdfReaderScreen extends StatefulWidget {
   State<PdfReaderScreen> createState() => _PdfReaderScreenState();
 }
 
-class _PdfReaderScreenState extends State<PdfReaderScreen> {
+class _PdfReaderScreenState extends State<PdfReaderScreen>
+    with SingleTickerProviderStateMixin {
   PdfDocument? _document;
   PdfPageImage? _currentPageImage;
   int _currentPage = 1;
@@ -28,17 +30,38 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
   bool _showControls = false;
   String? _error;
 
+  // AI Summary state
+  bool _showSummary = false;
+  bool _isLoadingSummary = false;
+  String? _currentSummary;
+  String? _summaryError;
+  late AnimationController _summaryAnimationController;
+  late Animation<double> _summaryAnimation;
+
+  final GeminiChatService _geminiService = GeminiChatService();
+
   @override
   void initState() {
     super.initState();
     _currentPage =
         widget.book.currentPage > 0 ? widget.book.currentPage + 1 : 1;
     _loadDocument();
+
+    // Initialize animation controller for summary panel
+    _summaryAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _summaryAnimation = CurvedAnimation(
+      parent: _summaryAnimationController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
     _document?.close();
+    _summaryAnimationController.dispose();
     _saveProgress();
     super.dispose();
   }
@@ -95,7 +118,16 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         _currentPageImage = pageImage;
         _currentPage = pageNumber;
         _isLoading = false;
+        // Reset summary when page changes
+        _showSummary = false;
+        _currentSummary = null;
+        _summaryError = null;
       });
+
+      // Collapse summary panel if showing
+      if (_summaryAnimationController.isCompleted) {
+        _summaryAnimationController.reverse();
+      }
 
       // Save progress periodically
       _saveProgress();
@@ -148,6 +180,70 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     }
   }
 
+  /// Toggle AI summary panel
+  void _toggleSummary() async {
+    if (_showSummary) {
+      // Hide summary
+      await _summaryAnimationController.reverse();
+      setState(() {
+        _showSummary = false;
+      });
+    } else {
+      // Show summary
+      setState(() {
+        _showSummary = true;
+      });
+      await _summaryAnimationController.forward();
+
+      // Load summary if not already loaded for this page
+      if (_currentSummary == null && !_isLoadingSummary) {
+        _loadPageSummary();
+      }
+    }
+  }
+
+  /// Load AI summary for current page
+  Future<void> _loadPageSummary() async {
+    if (_currentPageImage == null) return;
+
+    setState(() {
+      _isLoadingSummary = true;
+      _summaryError = null;
+    });
+
+    try {
+      final result = await _geminiService.summarizePdfPage(
+        pageImageBytes: _currentPageImage!.bytes,
+        pageNumber: _currentPage,
+        totalPages: _totalPages,
+        bookTitle: widget.book.title,
+      );
+
+      if (result.isSuccess) {
+        setState(() {
+          _currentSummary = result.response;
+          _isLoadingSummary = false;
+        });
+      } else if (result.isRateLimited) {
+        setState(() {
+          _summaryError =
+              'Rate limited. Please wait ${result.retryAfterSeconds ?? 60} seconds.';
+          _isLoadingSummary = false;
+        });
+      } else {
+        setState(() {
+          _summaryError = result.errorMessage ?? 'Failed to generate summary';
+          _isLoadingSummary = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _summaryError = 'Error: ${e.toString()}';
+        _isLoadingSummary = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
@@ -194,7 +290,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                             _goToPreviousPage();
                           }
                         },
-
                         onTapUp: (details) => _handleTap(details, constraints),
                         onLongPress: _toggleControls,
                         child: Column(
@@ -223,7 +318,14 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                                       themeProvider,
                                       backgroundColor,
                                     ),
-                                  // Ad banner at the bottom
+
+                                  // AI Summary button (bottom right)
+                                  if (!_showControls && !_isLoading)
+                                    _buildSummaryButton(themeProvider),
+
+                                  // AI Summary panel
+                                  if (_showSummary)
+                                    _buildSummaryPanel(themeProvider),
                                 ],
                               ),
                             ),
@@ -255,6 +357,199 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         ),
+      ),
+    );
+  }
+
+  /// AI Summary floating button
+  Widget _buildSummaryButton(ThemeProvider themeProvider) {
+    final colors = themeProvider.colors;
+
+    return Positioned(
+      bottom: 24,
+      right: 24,
+      child: Material(
+        color: colors.primary,
+        borderRadius: BorderRadius.circular(28),
+        elevation: 4,
+        child: InkWell(
+          onTap: _toggleSummary,
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                if (!_showSummary) ...[
+                  const SizedBox(width: 8),
+                  const Text(
+                    'AI Summary',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// AI Summary panel (slides from bottom)
+  Widget _buildSummaryPanel(ThemeProvider themeProvider) {
+    final colors = themeProvider.colors;
+    final isDark = themeProvider.isDarkMode;
+    final panelColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(_summaryAnimation),
+        child: Container(
+          decoration: BoxDecoration(
+            color: panelColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: colors.primary, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'AI Summary:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: colors.iconDefault),
+                        onPressed: _toggleSummary,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Summary content
+                Container(
+                  constraints: const BoxConstraints(
+                    maxHeight: 300,
+                    minHeight: 150,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    child: _buildSummaryContent(colors),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryContent(colors) {
+    if (_isLoadingSummary) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: colors.primary),
+            const SizedBox(height: 16),
+            Text(
+              'Generating AI summary...',
+              style: TextStyle(fontSize: 14, color: colors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_summaryError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: colors.error),
+            const SizedBox(height: 12),
+            Text(
+              _summaryError!,
+              style: TextStyle(fontSize: 14, color: colors.error),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _loadPageSummary,
+              child: Text('Retry', style: TextStyle(color: colors.primary)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_currentSummary != null) {
+      return Text(
+        _currentSummary!,
+        style: TextStyle(
+          fontSize: 15,
+          color: colors.textSecondary,
+          height: 1.5,
+        ),
+      );
+    }
+
+    return Center(
+      child: Text(
+        'No summary available',
+        style: TextStyle(fontSize: 14, color: colors.textSecondary),
       ),
     );
   }

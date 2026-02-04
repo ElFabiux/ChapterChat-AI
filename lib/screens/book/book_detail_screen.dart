@@ -55,11 +55,11 @@ class BookDetailScreen extends StatelessWidget {
                     if (localBook != null &&
                         localBook!.readingProgress > 0) ...[
                       const SizedBox(height: 16),
-                      _buildReadingProgress(),
+                      //_buildReadingProgress(),
                     ],
                     !isPremium ? SizedBox(height: 24) : const SizedBox.shrink(),
                     ads.getNativeWidget(isPremium),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 22),
                     if (book.characters != null &&
                         book.characters!.isNotEmpty) ...[
                       Text(

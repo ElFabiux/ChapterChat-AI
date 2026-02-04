@@ -32,6 +32,109 @@ class GeminiChatService {
   DateTime? _lastRequestTime;
   static const Duration _minRequestInterval = Duration(seconds: 4);
 
+  /// Summarize a PDF page using its image
+  /// This is the new method for AI page summarization
+  Future<ChatResult> summarizePdfPage({
+    required Uint8List pageImageBytes,
+    required int pageNumber,
+    required int totalPages,
+    String? bookTitle,
+  }) async {
+    // Client-side rate limiting - wait between requests
+    if (_lastRequestTime != null) {
+      final timeSinceLastRequest = DateTime.now().difference(_lastRequestTime!);
+      if (timeSinceLastRequest < _minRequestInterval) {
+        final waitTime = _minRequestInterval - timeSinceLastRequest;
+        print('⏳ Rate limit protection: waiting ${waitTime.inMilliseconds}ms');
+        await Future.delayed(waitTime);
+      }
+    }
+
+    try {
+      final prompt = _buildPageSummaryPrompt(
+        pageNumber: pageNumber,
+        totalPages: totalPages,
+        bookTitle: bookTitle,
+      );
+
+      print('📤 Sending PDF page to Gemini for summary');
+      print('📃 Page: $pageNumber/$totalPages');
+      _lastRequestTime = DateTime.now();
+
+      final response = await _gemini.textAndImage(
+        text: prompt,
+        images: [pageImageBytes],
+      );
+
+      if (response?.output != null && response!.output!.isNotEmpty) {
+        final output = response.output!.trim();
+        print('✅ Summary received (${output.length} chars)');
+        return ChatResult(response: output);
+      }
+
+      print('⚠️ Empty response from Gemini');
+      return ChatResult(errorMessage: 'Empty response');
+    } on GeminiException catch (e) {
+      print('❌ GeminiException: ${e.message}');
+
+      final message = e.message?.toString() ?? '';
+
+      if (message.contains('429') ||
+          message.contains('quota') ||
+          message.contains('RESOURCE_EXHAUSTED')) {
+        int retrySeconds = 60;
+        final retryMatch = RegExp(r'retry in (\d+)').firstMatch(message);
+        if (retryMatch != null) {
+          retrySeconds = int.tryParse(retryMatch.group(1) ?? '60') ?? 60;
+        }
+
+        print('🚫 RATE LIMITED - Retry after ${retrySeconds}s');
+        return ChatResult(
+          isRateLimited: true,
+          retryAfterSeconds: retrySeconds,
+          errorMessage: 'Rate limited - please wait',
+        );
+      }
+
+      return ChatResult(errorMessage: message);
+    } catch (e, stackTrace) {
+      print('❌ Unexpected error: $e');
+      print('Stack: $stackTrace');
+      return ChatResult(errorMessage: e.toString());
+    }
+  }
+
+  String _buildPageSummaryPrompt({
+    required int pageNumber,
+    required int totalPages,
+    String? bookTitle,
+  }) {
+    final bookContext = bookTitle != null ? ' from "$bookTitle"' : '';
+
+    return '''You are an AI reading assistant analyzing a page$bookContext.
+
+PAGE CONTEXT:
+- Current page: $pageNumber of $totalPages
+- This is a book page that may contain text, images, diagrams, or a combination of these elements.
+
+TASK:
+Provide a clear, concise summary of this page's content.
+
+SUMMARY GUIDELINES:
+1. Identify the main topic or theme of the page
+2. Extract key points, important information, or main ideas
+3. Note any significant details, names, dates, or concepts
+4. If there are images or diagrams, describe what they depict and their relevance
+5. Keep the summary informative yet concise (aim for 3-6 sentences)
+6. Use clear, accessible language
+7. Maintain objectivity - don't add interpretation beyond what's shown
+
+FORMAT:
+Provide the summary as a natural paragraph without any preamble like "This page describes..." - just start directly with the content.
+
+Now, analyze and summarize the page:''';
+  }
+
   Future<ChatResult> sendTextMessage({
     required ChatCharacter character,
     required String userMessage,

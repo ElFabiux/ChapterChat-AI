@@ -216,11 +216,11 @@ class _ShopContentState extends State<ShopContent> {
           return SliverList(
             delegate: SliverChildListDelegate([
               // Solo mostrar géneros si no hay búsqueda activa
-              if (widget.searchQuery.isEmpty) ...[
-                _buildSectionTitle('Genres'),
-                _buildGenresList(),
-                const SizedBox(height: 24),
-              ],
+              // if (widget.searchQuery.isEmpty) ...[
+              //   _buildSectionTitle('Genres'),
+              //   _buildGenresList(),
+              //   const SizedBox(height: 24),
+              // ],
 
               // Título de la sección de libros
               _buildSectionTitle(

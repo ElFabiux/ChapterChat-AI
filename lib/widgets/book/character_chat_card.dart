@@ -22,11 +22,10 @@ class CharacterChatCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         splashColor: colors.textPrimary.withOpacity(0.08),
         highlightColor: colors.textPrimary.withOpacity(0.04),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
